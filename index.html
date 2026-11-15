@@ -254,6 +254,8 @@ var SESS={
  R:{n:'استراحت',min:30,items:[
   {id:'r1',n:'پیاده‌روی سبک (اختیاری)',s:'30 دقیقه',r:'any'},MOB10]}
 };
+var LCI={id:'lc',n:'دستگاه کرانچ شکم',s:'2×12',r:'core',t:'با وزنه‌ی سبک، شکم را جمع کن و آرام برگرد'};
+var LL={ma4:1,mb4:1,mb5:1,mc12:1,mc13:1,mc8:1};
 var MATCH=[
  {id:'m1',n:'گرم‌کردن سبک قبل از بازی',s:'10 دقیقه',r:'any'},
  {id:'m2',n:'بعد از بازی: کشش و موبیلیتی',s:'10 دقیقه',r:'any'},
@@ -296,21 +298,28 @@ function planFor(id){
   }else if(type==='match'){
     counts=false;
     if(strength){
-      title=SESS[base].n+'، خیلی سبک (روز مسابقه)';min=35;
-      items=sessItems(base,ph).filter(function(it){return it.r==='upper'}).slice(0,4).map(function(it){return Object.assign({},it,{s:'2×12'})}).concat(MATCH);
+      title=SESS[base].n+'، خیلی سبک (روز مسابقه)';min=40;
+      items=sessItems(base,ph).filter(function(it){return it.r==='upper'}).slice(0,4).map(function(it){return Object.assign({},it,{s:'2×12'})}).concat([LCI],MATCH);
       notes.push('امروز مسابقه داری، پس باشگاه فقط بالاتنه و خیلی سبک است: 2 ست، وزنه حدود 70 درصد معمول و حداقل 3 تکرار ذخیره.');
       notes.push('اگر بازی عصر است، تمرین سبک را صبح بزن و حداقل 4 ساعت تا بازی فاصله بگذار. اگر بازی صبح است، بعد از بازی و کمی استراحت بزن یا کلاً ردش کن.');
     }else{
-      title='روز مسابقه';min=20;items=MATCH;
-      notes.push('امروز مسابقه داری و باشگاه لازم نیست. انرژی‌ات را برای بازی نگه دار.');
+      title='روز مسابقه';min=20;items=(base==='L1'||base==='L2')?[LCI].concat(MATCH):MATCH;
+      notes.push('امروز مسابقه داری. اگر خواستی فقط یک حرکت شکم سبک با دستگاه بزن و انرژی‌ات را برای بازی نگه دار.');
     }
   }else if(type==='train'){
     if(strength){
-      title=SESS[base].n+'، نسخه سبک بالاتنه';min=40;items=upperOnly();
-      notes.push('امروز تمرین فوتبال داری. پا را بار نزن تا برای فوتبال خسته نباشی.');
+      title=SESS[base].n+'، سبک‌شده (روز تمرین فوتبال)';min=40;
+      items=sessItems(base,ph).filter(function(it){return it.id==='w0'||it.r==='upper'||LL[it.id]||it.r==='core'}).map(lite);
+      if(!items.some(function(it){return it.r==='core'}))items.push(LCI);
+      notes.push('امروز تمرین فوتبال داری، پس وزنه سبک‌تر است ولی کار با دستگاه می‌ماند: بالاتنه با حدود 80 درصد وزنه و از پا فقط دستگاه‌های کم‌فشار (پشت‌ران، ادداکتور، ابداکتور، ساق) با حدود 60 درصد.');
+      notes.push('پرس پا، هاگ پا و اسمیت امروز نه. هر ست را با حداقل 3 تکرار ذخیره تمام کن. اگر فوتبال عصر است، وزنه را صبح یا بعد از فوتبال بزن، نه درست قبل از آن.');
+    }else if(base==='L1'||base==='L2'){
+      title='شکم سبک و موبیلیتی (روز تمرین فوتبال)';min=30;counts=false;
+      items=[LCI,{id:'lb',n:'نیمکت شکمی',s:'2×12',r:'core'},MOB15];
+      notes.push('کاردیو امروز همان فوتبال است. فقط شکم را سبک با دستگاه بزن.');
     }else{
       title='موبیلیتی بعد از فوتبال';min=15;items=[MOB15];counts=false;
-      notes.push('کاردیو امروز همان فوتبال است.');
+      notes.push('امروز روز استراحت است و فوتبال کار را انجام می‌دهد.');
     }
   }else if(next==='match'){
     if(strength){
@@ -411,7 +420,7 @@ function lastLog(itemId,id){
   var ks=Object.keys(S.days).sort().reverse();
   for(var i=0;i<ks.length;i++){
     var dd=S.days[ks[i]];
-    if(ks[i]<id&&dd.type!=='match'&&dd.w&&dd.w[itemId]){var n=parseFloat(norm(dd.w[itemId]));if(n>0)return {w:n,done:!!dd.done[itemId]}}
+    if(ks[i]<id&&dd.type!=='match'&&dd.type!=='train'&&dd.w&&dd.w[itemId]){var n=parseFloat(norm(dd.w[itemId]));if(n>0)return {w:n,done:!!dd.done[itemId]}}
   }
   return null;
 }
@@ -427,10 +436,12 @@ function sugBase(itemId,id){
   return {kg:rnd(st),step:0,kind:'start',why:'شروع سبک؛ ست آخر باید 2 تکرار ذخیره داشته باشی'};
 }
 function sugFor(itemId,id){
-  var g=sugBase(itemId,id);
-  if(dayOf(id).type==='match'){
-    var asst=(itemId==='mc3');
-    return {kg:rnd(g.kg*(asst?1.3:0.7)),step:0,kind:'light',why:'روز مسابقه: وزنه را سبک بزن'+(asst?' (کمک بیشتر)':' (حدود 70 درصد معمول)')};
+  var g=sugBase(itemId,id),ty=dayOf(id).type;
+  if(ty==='match'||ty==='train'){
+    var asst=(itemId==='mc3'),m=(ty==='match');
+    var f=m?(asst?1.3:0.7):(LL[itemId]?0.6:(asst?1.2:0.8));
+    var pc=m?'حدود 70 درصد معمول':(LL[itemId]?'حدود 60 درصد معمول':'حدود 80 درصد معمول');
+    return {kg:rnd(g.kg*f),step:0,kind:'light',why:(m?'روز مسابقه':'روز تمرین فوتبال')+': سبک‌تر بزن'+(asst?' (کمک بیشتر)':' ('+pc+')')};
   }
   return g;
 }
@@ -442,7 +453,7 @@ function upList(id){
 }
 function lastW(itemId,id){
   var ks=Object.keys(S.days).sort().reverse();
-  for(var i=0;i<ks.length;i++){if(ks[i]<id&&S.days[ks[i]].type!=='match'&&S.days[ks[i]].w&&S.days[ks[i]].w[itemId])return S.days[ks[i]].w[itemId]}
+  for(var i=0;i<ks.length;i++){if(ks[i]<id&&S.days[ks[i]].type!=='match'&&S.days[ks[i]].type!=='train'&&S.days[ks[i]].w&&S.days[ks[i]].w[itemId])return S.days[ks[i]].w[itemId]}
   return '';
 }
 function progressOf(id){
