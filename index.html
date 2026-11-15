@@ -212,73 +212,72 @@ function dlabel(id){return new Intl.DateTimeFormat('fa-IR-u-ca-'+cal(),{day:'num
 
 /* ---------- program data ---------- */
 var PATTERN=['A','L1','B','L2','C','L1','R'];
-var WARM={id:'w0',n:'گرم‌کردن (تردمیل سبک و حرکات پویا)',s:'10 دقیقه',r:'any'};
-var FIN={id:'fin',n:'کاردیو ملایم پایان تمرین',s:'10 تا 15 دقیقه',r:'cardio'};
-var PW={id:'pw',n:'لگ‌پرس انفجاری (سبک و سریع)',s:'3×6',r:'lower',w:1,t:'پایین آرام، بالا با سرعت؛ قفل نکردن زانو'};
+var WARM={id:'w0',n:'گرم‌کردن روی تردمیل، دوچرخه ثابت یا الپتیکال با شدت کم',s:'10 دقیقه',r:'any'};
+var FIN={id:'fin',n:'کاردیو ملایم پایان تمرین (تردمیل شیب‌دار، الپتیکال یا دوچرخه ثابت)',s:'10 تا 15 دقیقه',r:'cardio'};
+var PW={id:'pw',n:'پرس پا سبک و سریع',s:'3×6',r:'lower',w:1,t:'پایین آرام، بالا با سرعت کنترل‌شده؛ زانو را کامل قفل نکن'};
 var MOB10={id:'mob10',n:'کشش و موبیلیتی',s:'10 دقیقه',r:'any'};
 var MOB15={id:'mob',n:'کشش و موبیلیتی بعد از فوتبال',s:'15 دقیقه',r:'any'};
-var FLUSH={id:'fl',n:'دوچرخه ثابت یا پیاده‌روی خیلی آرام',s:'20 دقیقه',r:'any'};
-var WARM={id:'w0',n:'گرم‌کردن روی تردمیل یا دوچرخه ثابت و حرکات پویا',s:'10 دقیقه',r:'any'};
-var FIN={id:'fin',n:'کاردیو ملایم پایان تمرین (تردمیل شیب‌دار یا الپتیکال)',s:'10 تا 15 دقیقه',r:'cardio'};
+var FLUSH={id:'fl',n:'دوچرخه ثابت یا تردمیل با سرعت خیلی آرام',s:'20 دقیقه',r:'any'};
 var SESS={
- A:{n:'تمام‌بدن A (دستگاه)',min:75,items:[WARM,
-  {id:'ma1',n:'لگ‌پرس',s:'3×10',r:'lower',w:1,t:'پاها به عرض شانه، کمر چسبیده به پشتی'},
-  {id:'ma2',n:'پرس سینه دستگاه',s:'3×10',r:'upper',w:1,t:'اگر دستگاه نبود: پرس دمبل'},
-  {id:'ma3',n:'زیربغل سیم‌کش نشسته',s:'3×10',r:'upper',w:1},
-  {id:'ma4',n:'لگ‌کرل خوابیده یا نشسته',s:'3×12',r:'lower',w:1,t:'پشت‌ران برای فوتبال مهم است'},
-  {id:'ma5',n:'پرس سرشانه دستگاه',s:'3×10',r:'upper',w:1},
-  {id:'ma6',n:'پلانک',s:'3×30 ثانیه',r:'core'},FIN]},
- B:{n:'تمام‌بدن B (دستگاه)',min:75,items:[WARM,
-  {id:'mb1',n:'اسکات با دستگاه اسمیت',s:'3×10',r:'lower',w:1,t:'پاها کمی جلوتر از میله؛ اگر دستگاه نبود: هک اسکات'},
-  {id:'mb2',n:'پرس بالاسینه دستگاه یا اسمیت',s:'3×10',r:'upper',w:1},
-  {id:'mb3',n:'لت‌پول‌داون',s:'3×10',r:'upper',w:1},
-  {id:'mb4',n:'هیپ‌تراست (دستگاه یا اسمیت)',s:'3×10',r:'lower',w:1},
-  {id:'mb5',n:'لگ‌اکستنشن',s:'3×12',r:'lower',w:1,t:'بدون قفل‌کردن کامل زانو'},
-  {id:'mb6',n:'پشت‌بازو سیم‌کش',s:'3×12',r:'upper',w:1},
-  {id:'mb7',n:'جلوبازو با سیم‌کش یا دستگاه',s:'3×12',r:'upper',w:1},FIN]},
- C:{n:'تمام‌بدن C همراه با پرش (دستگاه)',min:80,items:[WARM,
-  {id:'mc1',n:'لگ‌پرس سنگین‌تر',s:'3×6',r:'lower',w:1,t:'سرعت کنترل‌شده، استراحت کامل بین ست‌ها'},
-  {id:'mc2',n:'پک‌دک (پروانه)',s:'3×12',r:'upper',w:1},
-  {id:'mc3',n:'بارفیکس با دستگاه کمکی',s:'3×6',r:'upper',w:1},
-  {id:'mc4',n:'لگ‌کرل نشسته',s:'3×10',r:'lower',w:1},
-  {id:'mc5',n:'پرش روی جعبه',s:'3×5',r:'lower',t:'فرود نرم، بین تکرارها استراحت کامل'},
-  {id:'mc6',n:'نشر جانب با دستگاه یا سیم‌کش',s:'3×12',r:'upper',w:1},
-  {id:'mc7',n:'جلوبازو و پشت‌بازو سیم‌کش سوپرست',s:'2×12',r:'upper',w:1},
-  {id:'mc8',n:'ساق پا ایستاده دستگاه',s:'3×15',r:'lower',w:1},FIN]},
- L1:{n:'کاردیو سبک و core',min:45,items:[
+ A:{n:'تمام‌بدن A (دستگاه)',min:80,items:[WARM,
+  {id:'ma1',n:'دستگاه پرس پا',s:'3×10',r:'lower',w:1,t:'پاها به عرض شانه، کمر چسبیده به پشتی، زانو را کامل قفل نکن'},
+  {id:'ma2',n:'دستگاه پرس سینه',s:'3×10',r:'upper',w:1,t:'دستگیره هم‌سطح وسط سینه؛ اگر دستگاه شلوغ بود: نیمکت پرس با هالتر'},
+  {id:'ma3',n:'دستگاه قایقی',s:'3×10',r:'upper',w:1,t:'سینه به پد، آرنج‌ها را به عقب بکش و کتف‌ها را جمع کن'},
+  {id:'ma4',n:'دستگاه پشت ران',s:'3×12',r:'lower',w:1,t:'پشت‌ران برای فوتبال مهم است؛ پایین‌آوردن آرام'},
+  {id:'ma5',n:'دستگاه پرس سرشانه',s:'3×10',r:'upper',w:1,t:'صندلی را طوری تنظیم کن که دستگیره‌ها هم‌سطح شانه باشند'},
+  {id:'ma8',n:'دستگاه پشت‌بازو دیپ',s:'3×12',r:'upper',w:1,t:'آرنج‌ها نزدیک بدن، دست‌ها را کامل صاف کن'},
+  {id:'ma7',n:'دستگاه فیله کمر',s:'3×12',r:'lower',t:'آرام بالا بیا و بیشتر از حالت صاف کمر خم نشو'},FIN]},
+ B:{n:'تمام‌بدن B (دستگاه)',min:80,items:[WARM,
+  {id:'mb1',n:'اسکات با دستگاه اسمیت',s:'3×10',r:'lower',w:1,t:'پاها کمی جلوتر از میله؛ اگر اسمیت شلوغ بود: دستگاه هاگ پا'},
+  {id:'mb8',n:'پرس نیمکت شیب‌دار با هالتر',s:'3×10',r:'upper',w:1,t:'نیمکت قابل تنظیم را روی 30 تا 45 درجه بگذار؛ هالتر تا بالای سینه پایین بیاید'},
+  {id:'mb3',n:'دستگاه لت (زیربغل سیم‌کش)',s:'3×10',r:'upper',w:1,t:'میله را تا بالای سینه بکش، نه پشت گردن'},
+  {id:'mb4',n:'دستگاه هیپ‌تراست',s:'3×10',r:'lower',w:1,t:'در بالا باسن را فشار بده و کمر را بیش از حد قوس نده'},
+  {id:'mb5',n:'دستگاه جلو ران',s:'3×12',r:'lower',w:1,t:'بدون قفل‌کردن کامل زانو'},
+  {id:'mb6',n:'پشت‌بازو سیم‌کش (دستگاه سیمکش دوطرفه)',s:'3×12',r:'upper',w:1,t:'آرنج‌ها ثابت کنار بدن'},
+  {id:'mb7',n:'جلوبازو با دستگاه سیمکش دوطرفه',s:'3×12',r:'upper',w:1,t:'بدون تاب‌دادن بدن'},
+  {id:'mb9',n:'نیمکت شکمی',s:'3×15',r:'core',t:'آرام بالا بیا و بدون کشیدن گردن'},FIN]},
+ C:{n:'تمام‌بدن C (دستگاه)',min:80,items:[WARM,
+  {id:'mc11',n:'دستگاه هاگ پا',s:'3×8',r:'lower',w:1,t:'پشت و باسن چسبیده به پشتی، پایین رفتن کنترل‌شده، استراحت کامل بین ست‌ها'},
+  {id:'mc2',n:'دستگاه باترفلای',s:'3×12',r:'upper',w:1,t:'آرنج کمی خم، دست‌ها را جلوی سینه جمع کن'},
+  {id:'mc3',n:'دستگاه بارفیکس کمکی',s:'3×6',r:'upper',w:1,t:'وزنه‌ی کمکی کمتر یعنی سخت‌تر'},
+  {id:'mc12',n:'دستگاه ادداکتور ران (داخل ران)',s:'3×12',r:'lower',w:1,t:'برای فوتبال و پیشگیری از کشیدگی کشاله مهم است؛ حرکت آرام'},
+  {id:'mc13',n:'دستگاه ابداکتور باسن (خارج ران)',s:'3×12',r:'lower',w:1,t:'کمر چسبیده به پشتی، پاها را آرام باز و بسته کن'},
+  {id:'mc6',n:'دستگاه نشر از جانب',s:'3×12',r:'upper',w:1,t:'آرنج را تا هم‌سطح شانه بالا ببر، بدون شانه‌بالاانداختن'},
+  {id:'mc9',n:'جلوبازو با دستگاه لاری',s:'3×12',r:'upper',w:1,t:'بازو کامل روی پد، پایین آوردن آرام'},
+  {id:'mc8',n:'دستگاه ساق پا ایستاده',s:'3×15',r:'lower',w:1,t:'مکث کوتاه در بالا و کشیدگی کامل در پایین'},FIN]},
+ L1:{n:'کاردیو سبک و شکم',min:45,items:[
   {id:'l1',n:'کاردیو سبک (تردمیل، دوچرخه ثابت یا الپتیکال)',s:'30 تا 40 دقیقه',r:'any',t:'در حدی که بتوانی صحبت کنی'},
-  {id:'l2',n:'دد باگ',s:'3×10',r:'core'},
-  {id:'l3',n:'پلانک جانبی',s:'3×25 ثانیه هر طرف',r:'core'},MOB10]},
+  {id:'lc',n:'دستگاه کرانچ شکم',s:'3×15',r:'core',t:'با وزنه‌ی سبک، شکم را جمع کن و آرام برگرد'},
+  {id:'lb',n:'نیمکت شکمی',s:'3×15',r:'core'},MOB10]},
  R:{n:'استراحت',min:30,items:[
   {id:'r1',n:'پیاده‌روی سبک (اختیاری)',s:'30 دقیقه',r:'any'},MOB10]}
 };
 var MATCH=[
- {id:'m1',n:'گرم‌کردن پویا قبل از بازی',s:'10 دقیقه',r:'any'},
+ {id:'m1',n:'گرم‌کردن سبک قبل از بازی',s:'10 دقیقه',r:'any'},
  {id:'m2',n:'بعد از بازی: کشش و موبیلیتی',s:'10 دقیقه',r:'any'},
  {id:'m3',n:'بعد از بازی: تا یک ساعت پروتئین و کربوهیدرات بخور و آب بنوش',s:'',r:'any'}];
 var ACT=[
- {id:'ac1',n:'گرم‌کردن و حرکات پویا',s:'10 دقیقه',r:'any'},
- {id:'ac2',n:'دوی کوتاه 20 متری با 70 درصد سرعت',s:'4 تکرار',r:'any'},MOB10];
-function sprintItems(ph){
-  var n=ph.k<=1?4:ph.k===2?6:8;
-  return [
-   {id:'s1',n:'گرم‌کردن (دوی آرام و حرکات پویا)',s:'10 دقیقه',r:'any'},
-   {id:'s2',n:'اسپرینت 20 تا 30 متر',s:n+' تکرار، استراحت 60 تا 90 ثانیه',r:'any',t:'هر تکرار با تمام سرعت'},
-   {id:'s3',n:'تغییر جهت با مخروط',s:'6 تکرار',r:'any'},
-   {id:'s4',n:'پلانک',s:'3×30 ثانیه',r:'core'},MOB10];
+ {id:'ac1',n:'گرم‌کردن روی دوچرخه ثابت یا الپتیکال خیلی سبک',s:'10 دقیقه',r:'any'},
+ {id:'ac3',n:'دستگاه ادداکتور و ابداکتور ران با کمترین وزنه',s:'2×12',r:'any',t:'فقط برای بیدارشدن عضله‌ها، نه خسته‌کردن'},MOB10];
+function cardioItems(ph){
+  var m=ph.k<=1?8:ph.k===2?10:12;
+  return [WARM,
+   {id:'v1',n:'دستگاه روئینگ',s:m+' دقیقه',r:'any',t:'اول پا هل بده، بعد کمر و در آخر بازو؛ شدت متوسط'},
+   {id:'v2',n:'الپتیکال',s:m+' دقیقه',r:'any',t:'شدت متوسط، در حدی که بتوانی جمله کوتاه بگویی'},
+   {id:'v3',n:'دستگاه استپ‌میل',s:m+' دقیقه',r:'any',t:'قامت صاف و بدون تکیه به دستگیره'},
+   {id:'lb',n:'نیمکت شکمی',s:'3×15',r:'core'},MOB10];
 }
 function phaseOf(w){
   if(w<1)return {k:0,tip:''};
   if(w<=2)return {k:1,tip:'مرحله 1: وزنه سبک بردار و روی فرم درست تمرکز کن. هر ست را با 2 تکرار ذخیره تمام کن.'};
   if(w<=5)return {k:2,tip:'مرحله 2: وقتی همه ست‌ها به بالاترین تکرار رسید، دفعه بعد 2.5 کیلو اضافه کن.'};
-  return {k:3,tip:'مرحله 3: حرکات انفجاری و سرعت را جدی‌تر کن و با 1 تا 2 تکرار ذخیره کار کن.'};
+  return {k:3,tip:'مرحله 3: وزنه‌ها را سنگین‌تر کن، پایین‌آوردن را آرام و بالا‌بردن را کنترل‌شده بزن و با 1 تا 2 تکرار ذخیره کار کن.'};
 }
 function weekOf(d){var st=parse(S.settings.start);return Math.floor(Math.round((d-st)/864e5)/7)+1}
 function weekLabel(w){return w<1?'قبل از شروع برنامه':w>8?'بعد از 8 هفته، ادامه مرحله 3':'هفته '+w+' از 8'}
 function sessItems(b,ph){
   var a=SESS[b].items.slice();
   if(ph.k>=3&&(b==='A'||b==='B'))a.splice(a.length-1,0,PW);
-  if(b==='C'&&ph.k<=1)a=a.map(function(it){return it.id==='mc5'?Object.assign({},it,{s:'3×5 (ارتفاع کم)'}):it});
   return a;
 }
 function planFor(id){
@@ -293,15 +292,23 @@ function planFor(id){
     title='استراحت کامل';min=30;items=SESS.R.items;counts=false;
     notes.push('این روز را استراحت انتخاب کردی. ریکاوری هم بخشی از پیشرفت است.');
   }else if(type==='match'){
-    title='روز مسابقه';min=20;items=MATCH;counts=false;
-    notes.push('باشگاه امروز تعطیل است. انرژی‌ات را برای بازی نگه دار.');
+    counts=false;
+    if(strength){
+      title=SESS[base].n+'، خیلی سبک (روز مسابقه)';min=35;
+      items=sessItems(base,ph).filter(function(it){return it.r==='upper'}).slice(0,4).map(function(it){return Object.assign({},it,{s:'2×12'})}).concat(MATCH);
+      notes.push('امروز مسابقه داری، پس باشگاه فقط بالاتنه و خیلی سبک است: 2 ست، وزنه حدود 70 درصد معمول و حداقل 3 تکرار ذخیره.');
+      notes.push('اگر بازی عصر است، تمرین سبک را صبح بزن و حداقل 4 ساعت تا بازی فاصله بگذار. اگر بازی صبح است، بعد از بازی و کمی استراحت بزن یا کلاً ردش کن.');
+    }else{
+      title='روز مسابقه';min=20;items=MATCH;
+      notes.push('امروز مسابقه داری و باشگاه لازم نیست. انرژی‌ات را برای بازی نگه دار.');
+    }
   }else if(type==='train'){
     if(strength){
       title=SESS[base].n+'، نسخه سبک بالاتنه';min=40;items=upperOnly();
       notes.push('امروز تمرین فوتبال داری. پا را بار نزن تا برای فوتبال خسته نباشی.');
     }else{
       title='موبیلیتی بعد از فوتبال';min=15;items=[MOB15];counts=false;
-      notes.push(base==='L2'?'فوتبال امروز سرعت و کاردیو را پوشش می‌دهد.':'کاردیو امروز همان فوتبال است.');
+      notes.push('کاردیو امروز همان فوتبال است.');
     }
   }else if(next==='match'){
     if(strength){
@@ -327,8 +334,8 @@ function planFor(id){
     title=SESS[base].n;min=SESS[base].min;items=sessItems(base,ph);
     if(ph.tip)notes.push(ph.tip);
   }else if(base==='L2'){
-    title='سرعت و چابکی';min=50;items=sprintItems(ph);
-    notes.push('اگر پاهایت سنگین بود، تعداد دوها را کم کن.');
+    title='کاردیو متنوع و شکم';min=50;items=cardioItems(ph);
+    notes.push('هر دستگاه را با شدت متوسط بزن. اگر پاهایت سنگین بود، زمان هر دستگاه را کم کن.');
   }else if(base==='L1'){
     title=SESS.L1.n;min=SESS.L1.min;items=SESS.L1.items;
   }else{
@@ -394,20 +401,20 @@ var PRE=[
 /* ---------- helpers for views ---------- */
 
 /* ---------- weight suggestions ---------- */
-var START={ma1:80,ma2:30,ma3:35,ma4:25,ma5:20,mb1:40,mb2:25,mb3:40,mb4:40,mb5:25,mb6:15,mb7:15,mc1:100,mc2:25,mc3:25,mc4:30,mc6:8,mc7:15,mc8:40,pw:70};
-var STEP={ma1:10,ma2:2.5,ma3:2.5,ma4:2.5,ma5:2.5,mb1:5,mb2:2.5,mb3:2.5,mb4:5,mb5:2.5,mb6:2.5,mb7:2.5,mc1:10,mc2:2.5,mc3:-2.5,mc4:2.5,mc6:1,mc7:2.5,mc8:5,pw:5};
-var H1='کل وزن صفحه‌های دستگاه',H2='عدد وزنه‌ی دستگاه (استک)';
-var HINT={ma1:H1,ma2:H2,ma3:H2,ma4:H2,ma5:H2,mb1:'کل وزن میله و صفحه‌ها',mb2:H2,mb3:H2,mb4:'کل وزن میله و صفحه‌ها',mb5:H2,mb6:H2,mb7:H2,mc1:H1,mc2:H2,mc3:'وزنه‌ی کمکی، کمتر یعنی سخت‌تر',mc4:H2,mc6:H2,mc7:H2,mc8:H2,pw:H1};
+var START={ma1:80,ma2:30,ma3:35,ma4:25,ma5:20,ma8:20,mb1:40,mb8:30,mb3:40,mb4:40,mb5:25,mb6:15,mb7:15,mc11:60,mc2:25,mc3:25,mc12:30,mc13:30,mc6:8,mc9:15,mc8:40,pw:70};
+var STEP={ma1:10,ma2:2.5,ma3:2.5,ma4:2.5,ma5:2.5,ma8:2.5,mb1:5,mb8:2.5,mb3:2.5,mb4:5,mb5:2.5,mb6:2.5,mb7:2.5,mc11:10,mc2:2.5,mc3:-2.5,mc12:2.5,mc13:2.5,mc6:1,mc9:2.5,mc8:5,pw:5};
+var H1='کل وزن صفحه‌های دستگاه',H2='عدد وزنه‌ی دستگاه (استک)',H3='کل وزن میله و صفحه‌ها';
+var HINT={ma1:H1,ma2:H2,ma3:H2,ma4:H2,ma5:H2,ma8:H2,mb1:H3,mb8:H3,mb3:H2,mb4:H3,mb5:H2,mb6:H2,mb7:H2,mc11:H1,mc2:H2,mc3:'وزنه‌ی کمکی، کمتر یعنی سخت‌تر',mc12:H2,mc13:H2,mc6:H2,mc9:H2,mc8:H2,pw:H1};
 function lastLog(itemId,id){
   var ks=Object.keys(S.days).sort().reverse();
   for(var i=0;i<ks.length;i++){
     var dd=S.days[ks[i]];
-    if(ks[i]<id&&dd.w&&dd.w[itemId]){var n=parseFloat(norm(dd.w[itemId]));if(n>0)return {w:n,done:!!dd.done[itemId]}}
+    if(ks[i]<id&&dd.type!=='match'&&dd.w&&dd.w[itemId]){var n=parseFloat(norm(dd.w[itemId]));if(n>0)return {w:n,done:!!dd.done[itemId]}}
   }
   return null;
 }
 function rnd(x){return Math.max(0,Math.round(x*2)/2)}
-function sugFor(itemId,id){
+function sugBase(itemId,id){
   var st=START[itemId]||0,step=STEP[itemId]||2.5,wk=weekOf(parse(id)),ph=phaseOf(wk),last=lastLog(itemId,id);
   if(last){
     if(last.done&&ph.k>=2)return {kg:rnd(last.w+step),step:Math.abs(step),kind:'up'};
@@ -417,6 +424,14 @@ function sugFor(itemId,id){
   if(n>0)return {kg:rnd(st+step*n),step:Math.abs(step*n),kind:'plan'};
   return {kg:rnd(st),step:0,kind:'start',why:'شروع سبک؛ ست آخر باید 2 تکرار ذخیره داشته باشی'};
 }
+function sugFor(itemId,id){
+  var g=sugBase(itemId,id);
+  if(dayOf(id).type==='match'){
+    var asst=(itemId==='mc3');
+    return {kg:rnd(g.kg*(asst?1.3:0.7)),step:0,kind:'light',why:'روز مسابقه: وزنه را سبک بزن'+(asst?' (کمک بیشتر)':' (حدود 70 درصد معمول)')};
+  }
+  return g;
+}
 function upList(id){
   var pl=planFor(id),out=[];
   if(!pl.strength)return out;
@@ -425,7 +440,7 @@ function upList(id){
 }
 function lastW(itemId,id){
   var ks=Object.keys(S.days).sort().reverse();
-  for(var i=0;i<ks.length;i++){if(ks[i]<id&&S.days[ks[i]].w&&S.days[ks[i]].w[itemId])return S.days[ks[i]].w[itemId]}
+  for(var i=0;i<ks.length;i++){if(ks[i]<id&&S.days[ks[i]].type!=='match'&&S.days[ks[i]].w&&S.days[ks[i]].w[itemId])return S.days[ks[i]].w[itemId]}
   return '';
 }
 function progressOf(id){
@@ -494,7 +509,7 @@ function vDay(id){
   h+='<div class="sec"><h3>یادداشت</h3><textarea data-act="note" placeholder="مثلاً خواب، انرژی یا درد عضله">'+esc(day.note||'')+'</textarea></div>';
   return h+'</section>';
 }
-var MACH='لگ‌پرس، پرس سینه دستگاه، پک‌دک، پرس سرشانه دستگاه، لت‌پول‌داون، زیربغل سیم‌کش، سیم‌کش (پشت‌بازو، جلوبازو، نشر جانب)، لگ‌کرل، لگ‌اکستنشن، دستگاه اسمیت، دستگاه بارفیکس کمکی، دستگاه ساق، تردمیل یا دوچرخه ثابت';
+var MACH='پرس پا، پرس سینه، قایقی، پشت‌ران، پرس سرشانه، پشت‌بازو دیپ، فیله کمر، اسمیت، نیمکت قابل تنظیم و هالتر، لت، هیپ‌تراست، جلو ران، سیمکش دوطرفه، نیمکت شکمی، هاگ پا، باترفلای، بارفیکس کمکی، ادداکتور و ابداکتور، نشر از جانب، لاری، ساق ایستاده، کرانچ شکم، تردمیل، دوچرخه ثابت، الپتیکال، روئینگ و استپ‌میل';
 function vWeek(){
   var c=cal(),st=ui.wk,en=addDays(st,6),p1=parts(st,c),p2=parts(en,c),td=iso(todayD());
   var h='<h1>برنامه هفته</h1><div class="top"><button class="nav" data-act="wprev" aria-label="هفته قبل">›</button><div class="mon" style="font-size:16px">'+fa(p1.d)+' '+monthName(st,c)+' تا '+fa(p2.d)+' '+monthName(en,c)+'</div><button class="nav" data-act="wnext" aria-label="هفته بعد">‹</button></div>';
@@ -588,7 +603,6 @@ var FR={
      {hip:[36,82],t:-8,fa:[72,82],ks:-1,hand:[47,68],hold:'cab',cab:[92,62],props:[['rect',26,86,20,3],['rect',75,70,3,18]]}],
  a4:[{hip:[50,50],t:0,fa:[50,88],hand:[50,53],hold:'bar'},
      {hip:[34,54],t:75,fa:[50,88],hand:[55,73],hold:'bar'}],
- a5:[{hip:[52,68],t:84,fa:[16,77],ft:[3,6],hand:[86,83],gy:84}],
  b1:[{hip:[52,52],t:5,fa:[66,88],ba:[16,64],bt:[-6,1],hand:[54,55],hold:'db',props:[['rect',4,66,24,4],['line',12,70,12,88]]},
      {hip:[48,66],t:8,fa:[66,88],ba:[16,64],bs:1,bt:[-6,1],hand:[51,69],hold:'db',props:[['rect',4,66,24,4],['line',12,70,12,88]]}],
  b2:[{hip:[50,50],t:0,fa:[50,88],hand:[54,24],hold:'db'},
@@ -609,19 +623,15 @@ var FR={
      {hip:[52,34],t:0,fa:[48,70],ng:1,hand:[56,8],props:[['line',20,8,80,8]]}],
  c4:[{hip:[50,50],t:0,fa:[50,88],hand:[50,53],hold:'db'},
      {hip:[47,66],t:3,fa:[64,88],ba:[24,80],bs:1,bt:[-4,8],hand:[48,69],hold:'db'}],
- c5:[{hip:[40,66],t:40,fa:[52,88],hand:[40,68]},
-     {hip:[56,44],t:25,fa:[62,66],hand:[78,32],props:[['rect',44,66,40,22]]}],
  c6:[{hip:[50,50],t:0,fa:[50,88],hand:[75,28],hold:'cab',cab:[94,28]},
      {hip:[50,50],t:0,fa:[50,88],hand:[60,22],es:1,hold:'cab',cab:[94,28]}],
  pw:[{hip:[36,56],t:55,fa:[50,88],hand:[50,66],hold:'kb'},
-     {hip:[50,50],t:0,fa:[50,88],hand:[75,29],hold:'kb'}],
- sp:[{hip:[50,48],t:15,fa:[64,80],ba:[26,62],bs:1,hand:[66,34],hand2:[36,44],es:-1,gy:88},
-     {hip:[50,48],t:15,fa:[60,66],ba:[44,86],bs:1,hand:[36,44],hand2:[66,34],es:-1,gy:88}]
+     {hip:[50,50],t:0,fa:[50,88],hand:[75,29],hold:'kb'}]
 };
 
 
-var IMG={ma3:'a3',ma6:'a5',mb3:'b3',mb4:'b4',mb6:'b6',mc3:'c3',mc5:'c5',mb7:'b5',mc7:'b5',s2:'sp'};
-var EN={ma1:'leg press machine',ma2:'chest press machine',ma3:'seated cable row',ma4:'leg curl machine',ma5:'shoulder press machine',ma6:'forearm plank',mb1:'smith machine squat',mb2:'incline chest press machine',mb3:'lat pulldown',mb4:'hip thrust machine',mb5:'leg extension machine',mb6:'triceps pushdown',mb7:'cable biceps curl',mc1:'leg press machine',mc2:'pec deck machine',mc3:'assisted pull up machine',mc4:'seated leg curl machine',mc5:'box jump',mc6:'machine lateral raise',mc7:'cable biceps triceps superset',mc8:'standing calf raise machine',pw:'explosive leg press',s2:'sprint technique',l2:'dead bug exercise',l3:'side plank'};
+var IMG={ma3:'a3',mb3:'b3',mb4:'b4',mb6:'b6',mc3:'c3',mb7:'b5'};
+var EN={ma1:'leg press machine',ma2:'chest press machine',ma3:'seated row machine',ma4:'seated leg curl machine',ma5:'shoulder press machine',ma8:'tricep dip machine',ma7:'back extension machine',mb1:'smith machine squat',mb8:'incline barbell bench press',mb3:'lat pulldown',mb4:'hip thrust machine',mb5:'leg extension machine',mb6:'triceps pushdown',mb7:'cable biceps curl',mb9:'ab bench crunch',mc11:'hack squat machine',mc2:'pec deck butterfly machine',mc3:'assisted pull up machine',mc12:'hip adductor machine',mc13:'hip abductor machine',mc6:'machine lateral raise',mc9:'preacher curl machine',mc8:'standing calf raise machine',pw:'leg press machine',lc:'ab crunch machine',lb:'ab bench crunch',v1:'rowing machine technique',v2:'elliptical machine',v3:'stair stepper machine'};
 function imgPanel(id){
   var fr=FR[IMG[id]],h='';
   if(fr){
