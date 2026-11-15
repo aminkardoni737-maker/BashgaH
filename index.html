@@ -100,6 +100,8 @@ textarea{width:100%;min-height:76px;resize:vertical}
 .bg7 path{fill:rgba(255,255,255,.05);stroke:rgba(255,255,255,.12);stroke-width:1.2;stroke-linejoin:round}
 .imgs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
 .imgs.one{grid-template-columns:1fr;max-width:55%}
+.lnks{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
+.imgs svg{min-height:120px}
 .imgs figure{margin:0;border:1px solid var(--line);border-radius:10px;padding:4px;background:rgba(255,255,255,.03)}
 .imgs figcaption{text-align:center;font-size:12px;color:var(--mut)}
 .imgs svg{width:100%;height:auto;display:block;color:var(--tx)}
@@ -497,7 +499,7 @@ function vDay(id){
       h+='<div class="sug">پیشنهاد امروز: <b>'+fa(sg.kg)+'</b> کیلو'+(HINT[it.id]?' ('+HINT[it.id]+')':'')+tag+(cur===''?'<button class="link" data-act="usew" data-id="'+it.id+'" data-v="'+sg.kg+'">ثبت</button>':'')+(sg.why?'<div class="exs">'+sg.why+'</div>':'')+'</div>';
       h+='<label class="wt">وزنه‌ی امروز <input type="text" inputmode="decimal" data-act="wt" data-id="'+it.id+'" value="'+esc(cur)+'" placeholder="'+(lw?esc(lw):fa(sg.kg))+'"> کیلو'+(lw?' <span>(دفعه قبل '+fa(esc(lw))+')</span>':'')+'</label>';
     }
-    if(IMG[it.id]||EN[it.id]){h+='<button class="link" data-act="img" data-id="'+it.id+'" aria-expanded="'+!!ui.open[it.id]+'">'+(ui.open[it.id]?'بستن تصویر حرکت':'تصویر حرکت')+'</button>';if(ui.open[it.id])h+=imgPanel(it.id)}
+    if(hasHelp(it)){h+='<button class="link" data-act="img" data-id="'+it.id+'" aria-expanded="'+!!ui.open[it.id]+'">'+(ui.open[it.id]?'بستن تصویر حرکت':'تصویر حرکت')+'</button>';if(ui.open[it.id])h+=imgPanel(it)}
     h+='</div></li>';
   });
   h+='</ul>';
@@ -557,6 +559,7 @@ function figSVG(f,o){
   var fg=o.fg||'currentColor',ac=o.acc||'var(--yel,#F4C430)';
   var acs=o.acc?'stroke="'+ac+'"':'style="stroke:var(--yel,#F4C430)"';
   var acf=o.acc?'fill="'+ac+'"':'style="fill:var(--yel,#F4C430)"';
+  if(f.fv)return frontSVG(f,fg,acs,acf);
   var R=Math.PI/180,GY=f.gy==null?88:f.gy,hip=f.hip;
   var tv=[Math.sin(f.t*R),-Math.cos(f.t*R)];
   var sho=[hip[0]+tv[0]*LT,hip[1]+tv[1]*LT];
@@ -565,13 +568,9 @@ function figSVG(f,o){
   var A=ik(hip,fAn,LTH,LSH,ks),B=ik(hip,ba,LTH,LSH,bs);
   var ft=f.ft||[7,0],bt=f.bt||[ft[0],ft[1]];
   var s='';
-  if(!f.ng)s+='<line x1="6" y1="'+GY+'" x2="94" y2="'+GY+'" stroke="'+fg+'" stroke-width="1" opacity=".35"/>';
-  (f.props||[]).forEach(function(p){
-    if(p[0]==='rect')s+='<rect x="'+p[1]+'" y="'+p[2]+'" width="'+p[3]+'" height="'+p[4]+'" fill="none" '+acs+' stroke-width="2" rx="1"/>';
-    else if(p[0]==='line')s+='<line x1="'+p[1]+'" y1="'+p[2]+'" x2="'+p[3]+'" y2="'+p[4]+'" '+acs+' stroke-width="2" stroke-linecap="round"/>';
-    else if(p[0]==='circ')s+='<circle cx="'+p[1]+'" cy="'+p[2]+'" r="'+p[3]+'" fill="none" '+acs+' stroke-width="2"/>';
-  });
-  s+=polyl([hip,B[0],B[1],[B[1][0]+bt[0],B[1][1]+bt[1]]],3.4,fg,.5);
+  if(!f.ng)s+='<line x1="4" y1="'+GY+'" x2="96" y2="'+GY+'" stroke="'+fg+'" stroke-width="1" opacity=".35"/>';
+  s+=propsSVG(f.props,acs,acf);
+  if(!f.nob)s+=polyl([hip,B[0],B[1],[B[1][0]+bt[0],B[1][1]+bt[1]]],3.4,fg,.5);
   var arm2=null;
   if(f.hand2){arm2=ik(sho,f.hand2,LUA,LFA,f.es2==null?(f.es==null?-1:f.es):f.es2);s+=polyl([sho,arm2[0],arm2[1]],3.2,fg,.5)}
   s+=polyl([sho,hip],4.6,fg);
@@ -586,59 +585,121 @@ function figSVG(f,o){
     var x=w[0].toFixed(1),y=w[1].toFixed(1);
     if(f.hold==='db')s+='<circle cx="'+x+'" cy="'+y+'" r="3.6" '+acf+'/>';
     else if(f.hold==='bar')s+='<circle cx="'+x+'" cy="'+y+'" r="'+(f.br||7)+'" fill="none" '+acs+' stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="1.6" '+acf+'/>';
-    else if(f.hold==='kb')s+='<circle cx="'+x+'" cy="'+(w[1]+3).toFixed(1)+'" r="4.6" '+acf+'/><path d="M'+(w[0]-2.5).toFixed(1)+','+(w[1]-1)+' q2.5,-5 5,0" fill="none" '+acs+' stroke-width="1.8"/>';
     else if(f.hold==='cab'&&f.cab)s+='<line x1="'+x+'" y1="'+y+'" x2="'+f.cab[0]+'" y2="'+f.cab[1]+'" '+acs+' stroke-width="1.6"/><circle cx="'+f.cab[0]+'" cy="'+f.cab[1]+'" r="2.4" '+acf+'/><circle cx="'+x+'" cy="'+y+'" r="2.4" '+acf+'/>';
   }
   return '<svg viewBox="0 -6 100 98" xmlns="http://www.w3.org/2000/svg" role="img">'+s+'</svg>';
 }
+function propsSVG(pr,acs,acf){
+  var s='';
+  (pr||[]).forEach(function(p){
+    var k=p[0];
+    if(k==='rect')s+='<rect x="'+p[1]+'" y="'+p[2]+'" width="'+p[3]+'" height="'+p[4]+'" fill="none" '+acs+' stroke-width="2" rx="1"/>';
+    else if(k==='line')s+='<line x1="'+p[1]+'" y1="'+p[2]+'" x2="'+p[3]+'" y2="'+p[4]+'" '+acs+' stroke-width="2" stroke-linecap="round"/>';
+    else if(k==='thick')s+='<line x1="'+p[1]+'" y1="'+p[2]+'" x2="'+p[3]+'" y2="'+p[4]+'" '+acs+' stroke-width="5" stroke-linecap="round" opacity=".55"/>';
+    else if(k==='circ')s+='<circle cx="'+p[1]+'" cy="'+p[2]+'" r="'+p[3]+'" fill="none" '+acs+' stroke-width="2"/>';
+    else if(k==='dot')s+='<circle cx="'+p[1]+'" cy="'+p[2]+'" r="'+p[3]+'" '+acf+'/>';
+    else if(k==='ell')s+='<ellipse cx="'+p[1]+'" cy="'+p[2]+'" rx="'+p[3]+'" ry="'+p[4]+'" fill="none" '+acs+' stroke-width="1.6" stroke-dasharray="3 2"/>';
+    else if(k==='pl')s+='<polyline points="'+p[1]+'" fill="none" '+acs+' stroke-width="2" stroke-linejoin="round"/>';
+    else if(k==='arr'){
+      var dx=p[3]>p[1]?1:-1;
+      s+='<line x1="'+p[1]+'" y1="'+p[2]+'" x2="'+p[3]+'" y2="'+p[2]+'" '+acs+' stroke-width="1.8"/><polyline points="'+(p[3]-dx*3)+','+(p[2]-2.5)+' '+p[3]+','+p[2]+' '+(p[3]-dx*3)+','+(p[2]+2.5)+'" fill="none" '+acs+' stroke-width="1.8"/>';
+    }
+  });
+  return s;
+}
+function frontSVG(f,fg,acs,acf){
+  var cx=50,hy=f.seat?64:52,sy=hy-22,s='';
+  s+='<line x1="4" y1="88" x2="96" y2="88" stroke="'+fg+'" stroke-width="1" opacity=".35"/>';
+  s+=propsSVG(f.props,acs,acf);
+  var kn=f.kn==null?7:f.kn,an=f.an==null?kn:f.an,ky=f.seat?hy+3:hy+19;
+  [-1,1].forEach(function(g){
+    s+=polyl([[cx+g*4,hy],[cx+g*kn,ky],[cx+g*an,88]],3.4,fg);
+    var a=f.arm||[[9,12],[10,24]];
+    var e=[cx+g*7+g*a[0][0],sy+a[0][1]],h=[cx+g*7+g*a[1][0],sy+a[1][1]];
+    s+=polyl([[cx+g*7,sy+1],e,h],3.2,fg);
+    if(f.pad)s+='<line x1="'+e[0]+'" y1="'+e[1]+'" x2="'+h[0]+'" y2="'+h[1]+'" '+acs+' stroke-width="5" stroke-linecap="round" opacity=".55"/>';
+  });
+  s+=polyl([[cx-7,sy+1],[cx+7,sy+1]],3.4,fg);
+  s+=polyl([[cx,sy+1],[cx,hy]],4.6,fg);
+  s+='<circle cx="'+cx+'" cy="'+(sy-8)+'" r="'+HR+'" fill="none" stroke="'+fg+'" stroke-width="3"/>';
+  return '<svg viewBox="0 -6 100 98" xmlns="http://www.w3.org/2000/svg" role="img">'+s+'</svg>';
+}
 
-
-var BENCH=[['rect',20,66,50,4],['line',26,70,26,88],['line',64,70,64,88]];
+var BK=function(a,b,c,d){return ['thick',a,b,c,d]};
+var SEATBK=[BK(22,40,25,70),BK(22,73,40,73)];
 var FR={
- a1:[{hip:[50,50],t:0,fa:[50,88],hand:[57,34],hold:'db'},
-     {hip:[38,66],t:35,fa:[50,88],hand:[59,53],hold:'db'}],
- a2:[{hip:[30,61],t:90,fa:[18,88],ks:-1,hand:[56,58],hold:'db',props:BENCH},
-     {hip:[30,61],t:90,fa:[18,88],ks:-1,hand:[52,36],hold:'db',props:BENCH}],
- a3:[{hip:[36,82],t:12,fa:[72,82],ks:-1,hand:[66,60],hold:'cab',cab:[92,62],props:[['rect',26,86,20,3],['rect',75,70,3,18]]},
+a3:[{hip:[36,82],t:12,fa:[72,82],ks:-1,hand:[66,60],hold:'cab',cab:[92,62],props:[['rect',26,86,20,3],['rect',75,70,3,18]]},
      {hip:[36,82],t:-8,fa:[72,82],ks:-1,hand:[47,68],hold:'cab',cab:[92,62],props:[['rect',26,86,20,3],['rect',75,70,3,18]]}],
- a4:[{hip:[50,50],t:0,fa:[50,88],hand:[50,53],hold:'bar'},
-     {hip:[34,54],t:75,fa:[50,88],hand:[55,73],hold:'bar'}],
- b1:[{hip:[52,52],t:5,fa:[66,88],ba:[16,64],bt:[-6,1],hand:[54,55],hold:'db',props:[['rect',4,66,24,4],['line',12,70,12,88]]},
-     {hip:[48,66],t:8,fa:[66,88],ba:[16,64],bs:1,bt:[-6,1],hand:[51,69],hold:'db',props:[['rect',4,66,24,4],['line',12,70,12,88]]}],
- b2:[{hip:[50,50],t:0,fa:[50,88],hand:[54,24],hold:'db'},
-     {hip:[50,50],t:0,fa:[50,88],hand:[50,3],hold:'db'}],
  b3:[{hip:[42,76],t:-10,fa:[66,88],hand:[48,30],hold:'cab',cab:[52,2],props:[['rect',32,80,18,3],['rect',56,64,14,3]]},
      {hip:[42,76],t:-10,fa:[66,88],hand:[50,50],hold:'cab',cab:[52,2],props:[['rect',32,80,18,3],['rect',56,64,14,3]]}],
  b4:[{hip:[52,78],t:-50,fa:[66,88],props:[['rect',14,66,26,4],['line',20,70,20,88]]},
      {hip:[52,65],t:-85,fa:[66,88],props:[['rect',14,66,26,4],['line',20,70,20,88]]}],
- b5:[{hip:[50,50],t:0,fa:[50,88],hand:[51,53],hold:'db'},
-     {hip:[50,50],t:0,fa:[50,88],hand:[58,29],hold:'db'}],
  b6:[{hip:[50,50],t:0,fa:[50,88],hand:[62,42],hold:'cab',cab:[62,0]},
      {hip:[50,50],t:0,fa:[50,88],hand:[51,53],hold:'cab',cab:[62,0]}],
- c1:[{hip:[34,68],t:50,fa:[50,88],hand:[51,79],hold:'bar',br:9},
-     {hip:[50,50],t:0,fa:[50,88],hand:[50,53],hold:'bar',br:9}],
- c2:[{hip:[36,70],t:-40,fa:[56,88],hand:[31,47],hold:'db',props:[['line',18,56,32,73],['rect',30,74,16,3]]},
-     {hip:[36,70],t:-40,fa:[56,88],hand:[41,37],hold:'db',props:[['line',18,56,32,73],['rect',30,74,16,3]]}],
- c3:[{hip:[52,55],t:0,fa:[50,92],ng:1,hand:[56,8],props:[['line',20,8,80,8]]},
-     {hip:[52,34],t:0,fa:[48,70],ng:1,hand:[56,8],props:[['line',20,8,80,8]]}],
- c4:[{hip:[50,50],t:0,fa:[50,88],hand:[50,53],hold:'db'},
-     {hip:[47,66],t:3,fa:[64,88],ba:[24,80],bs:1,bt:[-4,8],hand:[48,69],hold:'db'}],
- c6:[{hip:[50,50],t:0,fa:[50,88],hand:[75,28],hold:'cab',cab:[94,28]},
-     {hip:[50,50],t:0,fa:[50,88],hand:[60,22],es:1,hold:'cab',cab:[94,28]}],
- pw:[{hip:[36,56],t:55,fa:[50,88],hand:[50,66],hold:'kb'},
-     {hip:[50,50],t:0,fa:[50,88],hand:[75,29],hold:'kb'}]
+ lp:[{hip:[44,70],t:-60,fa:[66,54],hand:[47,65],props:[BK(23,63,42,74),BK(42,75,54,77),['line',48,80,92,54],BK(66,44,74,60)]},
+     {hip:[44,70],t:-60,fa:[77,52],hand:[47,65],props:[BK(23,63,42,74),BK(42,75,54,77),['line',48,80,92,54],BK(77,42,85,58)]}],
+ cp:[{hip:[30,70],t:-4,fa:[44,88],hand:[38,52],hold:'db',props:SEATBK.concat([['rect',8,30,8,44],BK(38,46,38,58)])},
+     {hip:[30,70],t:-4,fa:[44,88],hand:[52,47],hold:'db',props:SEATBK.concat([['rect',8,30,8,44],BK(52,41,52,53)])}],
+ sp:[{hip:[30,70],t:0,fa:[46,88],hand:[40,43],hold:'db',props:SEATBK.concat([['rect',8,30,8,44]])},
+     {hip:[30,70],t:0,fa:[46,88],hand:[34,24],hold:'db',props:SEATBK.concat([['rect',8,30,8,44]])}],
+ dip:[{hip:[30,70],t:-4,fa:[44,88],hand:[38,56],hold:'db',props:SEATBK.concat([['line',34,56,46,56]])},
+      {hip:[30,70],t:-4,fa:[44,88],hand:[35,70],hold:'db',props:SEATBK.concat([['line',31,70,43,70]])}],
+ lcurl:[{hip:[30,66],t:-8,fa:[64,70],props:[BK(22,70,40,70),BK(22,44,25,68),BK(61,63,67,76)]},
+        {hip:[30,66],t:-8,fa:[44,84],props:[BK(22,70,40,70),BK(22,44,25,68),BK(40,86,48,86)]}],
+ le:[{hip:[30,66],t:-8,fa:[46,86],props:[BK(22,70,40,70),BK(22,44,25,68),['circ',47,84,3]]},
+     {hip:[30,66],t:-8,fa:[64,62],props:[BK(22,70,40,70),BK(22,44,25,68),['circ',65,60,3]]}],
+ be:[{hip:[50,56],t:130,fa:[30,84],ks:1,props:[BK(40,64,60,52),['line',24,88,40,70],['line',54,88,56,62]]},
+     {hip:[50,56],t:78,fa:[30,84],ks:1,props:[BK(40,64,60,52),['line',24,88,40,70],['line',54,88,56,62]]}],
+ sm:[{hip:[50,50],t:0,fa:[50,88],hand:[53,30],hold:'bar',br:5,props:[['line',66,-4,66,88],['line',59,30,66,30]]},
+     {hip:[38,64],t:30,fa:[50,88],hand:[52,46],hold:'bar',br:5,props:[['line',66,-4,66,88],['line',59,46,66,46]]}],
+ ib:[{hip:[48,70],t:-42,fa:[62,88],hand:[41,54],hold:'bar',br:6,props:[BK(45,73,25,50),BK(44,76,60,76)]},
+     {hip:[48,70],t:-42,fa:[62,88],hand:[35,31],hold:'bar',br:6,props:[BK(45,73,25,50),BK(44,76,60,76)]}],
+ cc:[{hip:[50,50],t:0,fa:[50,88],hand:[55,52],hold:'cab',cab:[86,84],props:[['rect',84,50,8,38]]},
+     {hip:[50,50],t:0,fa:[50,88],hand:[59,36],hold:'cab',cab:[86,84],props:[['rect',84,50,8,38]]}],
+ ab:[{hip:[40,66],t:105,fa:[24,60],ks:-1,hand:[58,66],props:[['line',14,58,76,83],['line',58,77,58,88],['line',22,61,22,88],['circ',22,60,3]]},
+     {hip:[40,66],t:38,fa:[24,60],ks:-1,hand:[56,42],props:[['line',14,58,76,83],['line',58,77,58,88],['line',22,61,22,88],['circ',22,60,3]]}],
+ hk:[{hip:[40,55],t:-20,fa:[50,88],props:[['line',20,20,46,74],BK(37,56,29,34),BK(44,88,66,82)]},
+     {hip:[46,72],t:-20,fa:[54,88],props:[['line',20,20,46,74],BK(43,73,35,51),BK(46,88,66,82)]}],
+ pec:[{fv:1,seat:1,arm:[[13,-1],[13,-13]],pad:1,props:[BK(50,30,50,66)]},
+      {fv:1,seat:1,arm:[[8,6],[3,-6]],pad:1,props:[BK(50,30,50,66)]}],
+ ap:[{hip:[50,52],t:0,fa:[40,78],ks:1,hand:[54,6],es:-1,props:[['line',28,6,72,6],BK(50,76,66,76)]},
+     {hip:[50,32],t:0,fa:[40,58],ks:1,hand:[54,6],es:-1,props:[['line',28,6,72,6],BK(50,56,66,56)]}],
+ add:[{fv:1,seat:1,kn:24,an:27,arm:[[6,13],[6,25]],props:[BK(22,56,22,68),BK(78,56,78,68),['arr',33,48,41,48],['arr',67,48,59,48]]},
+      {fv:1,seat:1,kn:7,an:8,arm:[[6,13],[6,25]],props:[BK(36,56,36,68),BK(64,56,64,68)]}],
+ abd:[{fv:1,seat:1,kn:7,an:8,arm:[[6,13],[6,25]],props:[BK(36,56,36,68),BK(64,56,64,68)]},
+      {fv:1,seat:1,kn:24,an:27,arm:[[6,13],[6,25]],props:[BK(22,56,22,68),BK(78,56,78,68),['arr',17,48,9,48],['arr',83,48,91,48]]}],
+ lr:[{fv:1,seat:1,arm:[[9,12],[11,24]],pad:1},
+     {fv:1,seat:1,arm:[[14,1],[26,-2]],pad:1}],
+ lari:[{hip:[30,70],t:-3,fa:[44,88],hand:[48,66],hold:'db',props:[BK(36,46,54,68),['line',50,68,50,88],BK(22,74,40,74)]},
+       {hip:[30,70],t:-3,fa:[44,88],hand:[42,38],hold:'db',props:[BK(36,46,54,68),['line',50,68,50,88],BK(22,74,40,74)]}],
+ calf:[{hip:[50,48],t:0,fa:[50,86],ft:[7,0],props:[BK(43,24,59,24),['line',59,24,59,-4],['rect',38,86,30,5]]},
+       {hip:[50,42],t:0,fa:[50,80],ft:[6,6],props:[BK(43,18,59,18),['line',59,18,59,-4],['rect',38,86,30,5]]}],
+ cr:[{hip:[36,70],t:-4,fa:[50,88],hand:[40,56],hold:'db',props:[BK(26,42,28,72),BK(28,74,46,74),BK(42,48,42,60)]},
+     {hip:[36,70],t:42,fa:[50,88],hand:[52,56],hold:'db',props:[BK(26,42,28,72),BK(28,74,46,74),BK(56,52,56,64)]}],
+ row:[{hip:[46,74],t:20,fa:[70,78],hand:[74,64],props:[['line',8,84,76,84],BK(41,77,51,77),BK(72,70,72,84),['line',74,64,86,68],['circ',90,72,8]]},
+      {hip:[30,74],t:-20,fa:[68,78],hand:[38,60],props:[['line',8,84,76,84],BK(25,77,35,77),BK(72,70,72,84),['line',38,60,86,68],['circ',90,72,8]]}],
+ ell:[{hip:[48,48],t:4,fa:[62,80],ba:[34,82],hand:[62,38],props:[['ell',48,81,17,5],['line',70,6,62,42],['rect',78,10,12,78]]},
+      {hip:[48,48],t:4,fa:[34,82],ba:[62,80],hand:[62,38],props:[['ell',48,81,17,5],['line',70,6,62,42],['rect',78,10,12,78]]}],
+ step:[{hip:[46,52],t:8,fa:[58,72],ba:[38,88],hand:[62,42],props:[['rect',50,74,18,4],['rect',24,88,24,3],['line',64,28,66,60]]},
+       {hip:[46,52],t:8,fa:[38,88],ba:[58,72],hand:[62,42],props:[['rect',50,74,18,4],['rect',24,88,24,3],['line',64,28,66,60]]}],
+ tm:[{hip:[46,50],t:8,fa:[60,85],ba:[30,76],hand:[58,40],hand2:[38,42],es:-1,props:[['line',10,88,82,88],['line',82,28,82,88],['line',70,38,84,38]]},
+     {hip:[46,50],t:8,fa:[30,80],ba:[60,78],hand:[38,42],hand2:[58,40],es:-1,props:[['line',10,88,82,88],['line',82,28,82,88],['line',70,38,84,38]]}]
 };
 
 
-var IMG={ma3:'a3',mb3:'b3',mb4:'b4',mb6:'b6',mc3:'c3',mb7:'b5'};
-var EN={ma1:'leg press machine',ma2:'chest press machine',ma3:'seated row machine',ma4:'seated leg curl machine',ma5:'shoulder press machine',ma8:'tricep dip machine',ma7:'back extension machine',mb1:'smith machine squat',mb8:'incline barbell bench press',mb3:'lat pulldown',mb4:'hip thrust machine',mb5:'leg extension machine',mb6:'triceps pushdown',mb7:'cable biceps curl',mb9:'ab bench crunch',mc11:'hack squat machine',mc2:'pec deck butterfly machine',mc3:'assisted pull up machine',mc12:'hip adductor machine',mc13:'hip abductor machine',mc6:'machine lateral raise',mc9:'preacher curl machine',mc8:'standing calf raise machine',pw:'leg press machine',lc:'ab crunch machine',lb:'ab bench crunch',v1:'rowing machine technique',v2:'elliptical machine',v3:'stair stepper machine'};
-function imgPanel(id){
-  var fr=FR[IMG[id]],h='';
+var IMG={ma1:'lp',pw:'lp',ma2:'cp',ma3:'a3',ma4:'lcurl',ma5:'sp',ma8:'dip',ma7:'be',mb1:'sm',mb8:'ib',mb3:'b3',mb4:'b4',mb5:'le',mb6:'b6',mb7:'cc',mb9:'ab',lb:'ab',mc11:'hk',mc2:'pec',mc3:'ap',mc12:'add',ac3:'add',mc13:'abd',mc6:'lr',mc9:'lari',mc8:'calf',lc:'cr',v1:'row',v2:'ell',v3:'step',l1:'tm',w0:'tm',fin:'tm',fl:'tm'};
+var LAB={tm:['گام اول','گام دوم'],ell:['گام اول','گام دوم'],step:['گام اول','گام دوم'],lcurl:['شروع','خم‌کردن زانو'],le:['شروع','باز‌کردن زانو'],pec:['باز','بسته'],add:['باز','بسته'],abd:['بسته','باز'],lr:['پایین','بالا'],be:['پایین','بالا']};
+var NOHELP={r1:1,mob10:1,mob:1,m1:1,m2:1,m3:1};
+function hasHelp(it){return !!IMG[it.id]||(!NOHELP[it.id]&&/^(lower|upper|core|cardio)$/.test(it.r))}
+function qOf(it){return 'آموزش '+String(it.n).replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim()+' بدنسازی'}
+function imgPanel(it){
+  var fr=FR[IMG[it.id]],h='';
   if(fr){
-    var lab=fr.length>1?['شروع','پایان']:['حالت درست'];
-    h+='<div class="imgs'+(fr.length<2?' one':'')+'">'+fr.map(function(f,i){return '<figure>'+figSVG(f)+'<figcaption>'+lab[i]+'</figcaption></figure>'}).join('')+'</div><p class="sub">تصویرها شماتیک‌اند و فقط حالت کلی حرکت را نشان می‌دهند.</p>';
-  }
-  if(EN[id])h+='<a class="link" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+encodeURIComponent(EN[id]+' form')+'">ویدیوی آموزشی (نیاز به اینترنت)</a>';
+    var lab=LAB[IMG[it.id]]||(fr.length>1?['شروع','پایان']:['حالت درست']);
+    h+='<div class="imgs'+(fr.length<2?' one':'')+'">'+fr.map(function(f,i){return '<figure>'+figSVG(f)+'<figcaption>'+lab[i]+'</figcaption></figure>'}).join('')+'</div><p class="sub">تصویرها شماتیک‌اند و فقط حالت کلی حرکت را نشان می‌دهند. این بخش بدون اینترنت هم کار می‌کند.</p>';
+  }else h+='<p class="sub">برای این حرکت شماتیک ندارم، از لینک‌های زیر استفاده کن.</p>';
+  var q=encodeURIComponent(qOf(it));
+  h+='<div class="lnks"><a class="link" target="_blank" rel="noopener" href="https://www.aparat.com/search/'+q+'">ویدیوی آموزشی در آپارات</a><a class="link" target="_blank" rel="noopener" href="https://www.bing.com/images/search?q='+q+'">تصویرهای حرکت در بینگ</a></div><p class="sub">هر دو لینک بدون فیلترشکن باز می‌شوند ولی به اینترنت نیاز دارند.</p>';
   return h;
 }
 function banner(){
