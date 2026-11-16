@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>برنامه فوتبال و باشگاه</title>
 <style>
+@font-face{font-family:"B Titr";src:local("B Titr"),local("BTitr"),local("B-Titr"),local("BTitrBold"),url("BTitr.woff2") format("woff2"),url("BTitr.ttf") format("truetype");font-display:swap}
 :root{--bg:#000000;--s1:#101010;--s2:#1a1a1a;--tx:#F5F5F0;--mut:#9A9A94;--line:rgba(255,255,255,.18);--yel:#F4C430;--red:#FF6B6F;--on-yel:#1A1403;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg)}
@@ -149,6 +150,12 @@ textarea{width:100%;min-height:76px;resize:vertical}
 .chips button{border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:40px;font-size:14px}
 .askrow{display:flex;gap:8px;margin-top:8px}
 .askrow input{flex:1;min-width:0}
+.pfl{display:block;margin:12px 0 6px;font-weight:600}
+.pfg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pfg label{font-size:13px;color:var(--mut)}
+.pfg input{width:100%;margin-top:4px;color:var(--tx);background:var(--s1);text-align:center;font-size:16px}
+.fk{display:block;color:var(--yel);font-size:12.5px;line-height:1.6;margin-top:2px}
+.askrow{position:sticky;bottom:calc(68px + env(safe-area-inset-bottom));background:var(--bg);padding:8px 0;z-index:2}
 </style>
 </head>
 <body>
@@ -308,16 +315,16 @@ function weekOf(d){var st=parse(S.settings.start);return Math.floor(Math.round((
 function weekLabel(w){return w<1?'قبل از شروع برنامه':w>8?'بعد از 8 هفته، ادامه مرحله 3':'هفته '+w+' از 8'}
 function sessItems(b,ph){
   var a=SESS[b].items.slice();
-  if(ph.k>=3&&(b==='A'||b==='B'))a.splice(a.length-1,0,PW);
+  if(ph.k>=3&&(b==='A'||b==='B')&&getProf().sport)a.splice(a.length-1,0,PW);
   return a;
 }
 function planFor(id){
   var d=parse(id),day=dayOf(id),type=day.type,base=PATTERN[wdIdx(d)];
   var next=dayOf(iso(addDays(d,1))).type,prev=dayOf(iso(addDays(d,-1))).type;
   var ph=phaseOf(weekOf(d));
-  var strength=base==='A'||base==='B'||base==='C';
+  var strength=!!(SESS[base]&&SESS[base].lift);
   var notes=[],title,min,items,counts=true;
-  var lite=function(it){return Object.assign({},it,{s:it.s.replace(/^3×/,'2×')})};
+  var lite=function(it){return Object.assign({},it,{s:it.s.replace(/^[34]×/,'2×')})};
   var upperOnly=function(){return sessItems(base,ph).filter(function(it){return it.r==='any'||it.r==='upper'||it.r==='core'}).map(lite)};
   if(type==='rest'){
     title='استراحت کامل';min=30;items=SESS.R.items;counts=false;
@@ -389,7 +396,7 @@ function foodKey(id){
   if(t==='rest')return 'rest';
   if(dayOf(iso(addDays(d,1))).type==='match')return 'gym';
   var b=PATTERN[wdIdx(d)];
-  return (b==='A'||b==='B'||b==='C')?'gym':'rest';
+  return (SESS[b]&&SESS[b].lift)?'gym':'rest';
 }
 
 /* ---------- food data ---------- */
@@ -487,65 +494,90 @@ var DB=[
 ];
 
 
-var I=function(t,k,q,alt){return {t:t,p:[[k,q]],alt:!!alt}};
-var J=function(t,ps,alt){return {t:t,p:ps,alt:!!alt}};
-var MEALS={
-gym:{n:'روز وزنه',water:'2.5 تا 3 لیتر',meals:[
- ['صبحانه',[I('3 تخم‌مرغ (آب‌پز یا نیمرو با کمی روغن)','egg',3),I('1 تکه نان سنگک یا جو','sangak',1),I('پنیر کم‌چرب (یک قوطی کبریت)','cheese',1),J('خیار و گوجه',[['cucumber',1],['tomato',1]]),I('چای بدون قند','tea',1)]],
- ['میان‌وعده',[I('ماست کم‌چرب','yogurt',1),I('یک مشت گردو (3 عدد) یا 10 بادام','walnut',1)]],
- ['ناهار',[I('150 گرم سینه مرغ یا گوشت کم‌چرب (کباب برگ، چرخ‌کرده کم‌چرب)','chicken',1.5),I('3 کفگیر برنج (یا یک سیب‌زمینی بزرگ پخته)','rice',3),I('سالاد بزرگ','salad',1)]],
- ['1 تا 2 ساعت قبل از باشگاه',[I('یک موز','banana',1),I('2 تا 3 عدد خرما','dates',2.5),J('یا: یک قاشق ارده، یک قاشق شیره و یک تکه کوچک نان',[['tahini',1],['molasses',1],['sangak',0.5]],true)]],
- ['حین تمرین',[I('آب، نیم تا یک لیتر جرعه‌جرعه','water',3),I('اگر تمرین بیشتر از 75 دقیقه شد یا ضعف داشتی: 1 تا 2 خرما یا نصف موز','dates',1.5,true)]],
- ['بعد از تمرین (تا یک ساعت)',[I('یک لیوان شیر','milk',1),I('یک تخم‌مرغ آب‌پز','egg',1),J('یا: یک پرس مرغ با نان',[['chicken',1.2],['sangak',1]],true),I('اگر وی داری: یک اسکوپ','whey',1,true)]],
- ['شام',[I('120 گرم مرغ، گوشت کم‌چرب (یا یک کاسه عدسی)','chicken',1.2),I('سبزیجات فراوان','veg',1.5),I('2 کفگیر برنج یا یک تکه نان','rice',2)]]
-]},
-train:{n:'روز تمرین فوتبال',water:'3 لیتر یا بیشتر',meals:[
- ['صبحانه',[I('3 تخم‌مرغ','egg',3),I('نان سنگک یا جو (1.5 تکه)','sangak',1.5),I('پنیر کم‌چرب','cheese',1),J('سبزی',[['cucumber',1],['tomato',1]]),I('یک میوه (سیب یا پرتقال)','apple',1)]],
- ['ناهار',[I('130 گرم مرغ یا گوشت کم‌چرب','chicken',1.3),I('3 کفگیر برنج (یا یک سیب‌زمینی بزرگ)','rice',3),I('سالاد','salad',1)]],
- ['1.5 تا 2 ساعت قبل از تمرین',[I('موز','banana',1),I('2 عدد خرما','dates',2),I('یک نان کوچک (لواش)','lavash',1),I('یک قاشق عسل یا مربا','honey',1),J('یا: نان با یک قاشق شیره و نصف قاشق ارده',[['sangak',1],['molasses',1],['tahini',0.5]],true)]],
- ['حین تمرین',[I('آب؛ اگر بیشتر از 60 دقیقه شد، کمی نمک یا نوشیدنی الکترولیت','water',3)]],
- ['بعد از تمرین (تا یک ساعت)',[I('شیر','milk',1),I('یک موز یا میوه','banana',1),I('10 عدد بادام','almond',1)]],
- ['شام',[I('130 گرم مرغ یا گوشت کم‌چرب','chicken',1.3),I('2 تا 3 کفگیر برنج یا نان','rice',2.5),I('سالاد','salad',1)]]
-]},
-match:{n:'روز مسابقه',water:'3 لیتر یا بیشتر',meals:[
- ['صبحانه (3 تا 4 ساعت قبل از بازی)',[I('جو دوسر (60 گرم)','oats',1.5),I('یک موز','banana',1),I('یک قاشق عسل','honey',1),I('یک لیوان شیر','milk',1),J('یا: نان با تخم‌مرغ آب‌پز و مربا',[['sangak',2],['egg',2],['jam',1]],true)]],
- ['3 ساعت قبل',[I('ماکارونی یا 4 کفگیر برنج','rice',4),I('مرغ (130 گرم)، بدون سس و روغن زیاد','chicken',1.3)]],
- ['45 تا 60 دقیقه قبل',[I('یک موز','banana',1),I('2 خرما','dates',2),I('آب کافی','water',2)]],
- ['حین بازی',[I('آب؛ در هوای گرم کمی نمک یا نوشیدنی الکترولیت','water',3)]],
- ['بعد از بازی (تا یک ساعت)',[I('شیر یا ماست','milk',1),I('یک موز یا میوه','banana',1),I('2 تخم‌مرغ آب‌پز','egg',2)]],
- ['شام',[I('150 گرم مرغ یا گوشت کم‌چرب','chicken',1.5),I('4 کفگیر برنج یا نان','rice',4),I('سالاد','salad',1)]]
-]},
-rest:{n:'روز استراحت یا سبک',water:'2.5 لیتر',meals:[
- ['صبحانه',[I('3 تخم‌مرغ','egg',3),I('1.5 تکه نان','sangak',1.5),I('پنیر کم‌چرب','cheese',1),J('سبزی',[['cucumber',1],['tomato',1]])]],
- ['میان‌وعده',[I('ماست یونانی یا کم‌چرب','greek',1),I('یک میوه','apple',1)]],
- ['ناهار',[I('160 گرم مرغ یا گوشت کم‌چرب','chicken',1.6),I('2 تا 3 کفگیر برنج (یا یک سیب‌زمینی)','rice',2.5),I('سالاد زیاد','salad',1.5)]],
- ['میان‌وعده',[I('مشتی آجیل خام (30 گرم)','nuts',1)]],
- ['شام',[I('املت سبزیجات (2 تخم‌مرغ)','egg',2),I('یک کاسه عدسی یا سوپ جو','lentil',1),I('سالاد','salad',1)]]
-]}
-};
-
-
 var DBI={};
 DB.forEach(function(r){DBI[r[0]]={k:r[0],n:r[1],u:r[2],g:r[3],kc:r[4],p:r[5],c:r[6],f:r[7],v:r[8],note:r[9],al:r[10]}});
 function sumP(ps){var o={kc:0,p:0,c:0,f:0};ps.forEach(function(x){var d=DBI[x[0]];if(!d)return;o.kc+=d.kc*x[1];o.p+=d.p*x[1];o.c+=d.c*x[1];o.f+=d.f*x[1]});return o}
 function fmt(x){return String(x>=10?Math.round(x):Math.round(x*10)/10)}
+var TI=function(t,k,q,g,o){o=o||{};return {t:t,p:[[k,q]],g:g,o:o,q:q,alt:!!o.alt}};
+var TJ=function(t,ps,alt){return {t:t,p:ps,g:'x',o:{},alt:!!alt}};
+var PS={st:0.25,m:100,mn:0.6,mx:2.5};
+var TPL={
+gym:{n:'روز وزنه',meals:[
+ ['صبحانه',[TI('{n} تخم‌مرغ (آب‌پز یا نیمرو با کمی روغن)','egg',3,'p',{st:1,mn:1,mx:5}),TI('{n} تکه نان سنگک یا جو','sangak',1,'c',{st:0.5,mn:0.5,mx:3}),TI('پنیر کم‌چرب (یک قوطی کبریت)','cheese',1,'x'),TJ('خیار و گوجه',[['cucumber',1],['tomato',1]]),TI('چای بدون قند','tea',1,'x')]],
+ ['میان‌وعده',[TI('ماست کم‌چرب','yogurt',1,'x'),TI('یک مشت گردو (3 عدد) یا 10 بادام','walnut',1,'x')]],
+ ['ناهار',[TI('{n} گرم سینه مرغ یا گوشت کم‌چرب (کباب برگ، چرخ‌کرده کم‌چرب)','chicken',1.5,'p',PS),TI('{n} کفگیر برنج (یا معادلش سیب‌زمینی یا نان)','rice',3,'c',{st:0.5,mn:0.5,mx:6}),TI('سالاد بزرگ','salad',1,'x')]],
+ ['1 تا 2 ساعت قبل از باشگاه',[TI('{n} موز','banana',1,'c',{st:0.5,mn:0.5,mx:2}),TI('{n} عدد خرما','dates',2.5,'c',{st:0.5,mn:1,mx:5}),TJ('یا: یک قاشق ارده، یک قاشق شیره و یک تکه کوچک نان',[['tahini',1],['molasses',1],['sangak',0.5]],true)]],
+ ['حین تمرین',[TI('آب، نیم تا یک لیتر جرعه‌جرعه','water',3,'x'),TI('اگر تمرین بیشتر از 75 دقیقه شد یا ضعف داشتی: 1 تا 2 خرما یا نصف موز','dates',1.5,'x',{alt:true})]],
+ ['بعد از تمرین (تا یک ساعت)',[TI('یک لیوان شیر','milk',1,'p',{st:1,mn:1,mx:2}),TI('{n} تخم‌مرغ آب‌پز','egg',1,'p',{st:1,mn:1,mx:3}),TJ('یا: یک پرس مرغ با نان',[['chicken',1.2],['sangak',1]],true),TI('اگر وی داری: یک اسکوپ','whey',1,'x',{alt:true})]],
+ ['شام',[TI('{n} گرم مرغ یا گوشت کم‌چرب (یا یک کاسه عدسی)','chicken',1.2,'p',PS),TI('سبزیجات فراوان','veg',1.5,'x'),TI('{n} کفگیر برنج یا یک تکه نان','rice',2,'c',{st:0.5,mn:0.5,mx:5})]]
+]},
+train:{n:'روز تمرین فوتبال',meals:[
+ ['صبحانه',[TI('{n} تخم‌مرغ','egg',3,'p',{st:1,mn:2,mx:5}),TI('{n} تکه نان سنگک یا جو','sangak',1.5,'c',{st:0.5,mn:0.5,mx:3}),TI('پنیر کم‌چرب','cheese',1,'x'),TJ('سبزی',[['cucumber',1],['tomato',1]]),TI('{n} میوه (سیب یا پرتقال)','apple',1,'c',{st:1,mn:1,mx:2})]],
+ ['ناهار',[TI('{n} گرم مرغ یا گوشت کم‌چرب','chicken',1.3,'p',PS),TI('{n} کفگیر برنج (یا معادلش سیب‌زمینی یا نان)','rice',3,'c',{st:0.5,mn:1,mx:6}),TI('سالاد','salad',1,'x')]],
+ ['1.5 تا 2 ساعت قبل از تمرین',[TI('{n} موز','banana',1,'c',{st:0.5,mn:0.5,mx:2}),TI('{n} عدد خرما','dates',2,'c',{st:1,mn:1,mx:4}),TI('{n} نان کوچک (لواش)','lavash',1,'c',{st:1,mn:1,mx:2}),TI('یک قاشق عسل یا مربا','honey',1,'x'),TJ('یا: نان با یک قاشق شیره و نصف قاشق ارده',[['sangak',1],['molasses',1],['tahini',0.5]],true)]],
+ ['حین تمرین',[TI('آب؛ اگر بیشتر از 60 دقیقه شد، کمی نمک یا نوشیدنی الکترولیت','water',3,'x')]],
+ ['بعد از تمرین (تا یک ساعت)',[TI('شیر','milk',1,'p',{st:1,mn:1,mx:2}),TI('{n} موز یا میوه','banana',1,'c',{st:1,mn:1,mx:2}),TI('10 عدد بادام','almond',1,'x')]],
+ ['شام',[TI('{n} گرم مرغ یا گوشت کم‌چرب','chicken',1.3,'p',PS),TI('{n} کفگیر برنج یا نان','rice',2.5,'c',{st:0.5,mn:1,mx:6}),TI('سالاد','salad',1,'x')]]
+]},
+match:{n:'روز مسابقه',meals:[
+ ['صبحانه (3 تا 4 ساعت قبل از بازی)',[TI('جو دوسر ({n} گرم)','oats',1.5,'c',{st:0.25,m:40,mn:1,mx:3}),TI('{n} موز','banana',1,'c',{st:0.5,mn:0.5,mx:2}),TI('یک قاشق عسل','honey',1,'x'),TI('یک لیوان شیر','milk',1,'p',{st:1,mn:1,mx:2}),TJ('یا: نان با تخم‌مرغ آب‌پز و مربا',[['sangak',2],['egg',2],['jam',1]],true)]],
+ ['3 ساعت قبل',[TI('ماکارونی یا {n} کفگیر برنج','rice',4,'c',{st:0.5,mn:2,mx:7}),TI('مرغ ({n} گرم)، بدون سس و روغن زیاد','chicken',1.3,'p',PS)]],
+ ['45 تا 60 دقیقه قبل',[TI('{n} موز','banana',1,'c',{st:0.5,mn:0.5,mx:2}),TI('{n} خرما','dates',2,'c',{st:1,mn:1,mx:4}),TI('آب کافی','water',2,'x')]],
+ ['حین بازی',[TI('آب؛ در هوای گرم کمی نمک یا نوشیدنی الکترولیت','water',3,'x')]],
+ ['بعد از بازی (تا یک ساعت)',[TI('شیر یا ماست','milk',1,'p',{st:1,mn:1,mx:2}),TI('{n} موز یا میوه','banana',1,'c',{st:1,mn:1,mx:2}),TI('{n} تخم‌مرغ آب‌پز','egg',2,'p',{st:1,mn:1,mx:4})]],
+ ['شام',[TI('{n} گرم مرغ یا گوشت کم‌چرب','chicken',1.5,'p',PS),TI('{n} کفگیر برنج یا نان','rice',4,'c',{st:0.5,mn:2,mx:7}),TI('سالاد','salad',1,'x')]]
+]},
+rest:{n:'روز استراحت یا سبک',meals:[
+ ['صبحانه',[TI('{n} تخم‌مرغ','egg',3,'p',{st:1,mn:2,mx:5}),TI('{n} تکه نان','sangak',1.5,'c',{st:0.5,mn:0.5,mx:3}),TI('پنیر کم‌چرب','cheese',1,'x'),TJ('سبزی',[['cucumber',1],['tomato',1]])]],
+ ['میان‌وعده',[TI('ماست یونانی یا کم‌چرب','greek',1,'x'),TI('{n} میوه','apple',1,'c',{st:1,mn:1,mx:2})]],
+ ['ناهار',[TI('{n} گرم مرغ یا گوشت کم‌چرب','chicken',1.6,'p',PS),TI('{n} کفگیر برنج (یا معادلش سیب‌زمینی)','rice',2.5,'c',{st:0.5,mn:1,mx:5}),TI('سالاد زیاد','salad',1.5,'x')]],
+ ['میان‌وعده',[TI('{n} مشت آجیل خام (هر مشت حدود 30 گرم)','nuts',1,'c',{st:0.5,mn:0.5,mx:2})]],
+ ['شام',[TI('{n} تخم‌مرغ (املت سبزیجات)','egg',2,'p',{st:1,mn:1,mx:4}),TI('{n} کاسه عدسی یا سوپ جو','lentil',1,'c',{st:0.5,mn:0.5,mx:2}),TI('سالاد','salad',1,'x')]]
+]}
+};
+function fmtN(n){n=Math.round(n*10)/10;return n===0.5?'نیم':String(n)}
 var FOOD={};
-Object.keys(MEALS).forEach(function(k){
-  var M=MEALS[k],T={kc:0,p:0,c:0,f:0};
-  var meals=M.meals.map(function(m){
-    var t={kc:0,p:0,c:0,f:0},main=[],alt=[];
-    m[1].forEach(function(it){
-      it.s=sumP(it.p);
-      if(it.alt)alt.push(it.t);
-      else{t.kc+=it.s.kc;t.p+=it.s.p;t.c+=it.s.c;t.f+=it.s.f;main.push(it.t)}
+function buildFood(pf,calc){
+  var DAYF={gym:1,train:1.05,match:1.12,rest:0.88},out={};
+  Object.keys(TPL).forEach(function(k){
+    var Tm=TPL[k],base={p:{kc:0,p:0},c:{kc:0,p:0},x:{kc:0,p:0}};
+    Tm.meals.forEach(function(m){m[1].forEach(function(it){if(it.alt)return;var q=sumP(it.p);var g=it.g||'x';base[g].kc+=q.kc;base[g].p+=q.p})});
+    var a=1,b=1;
+    if(!pf.legacy){
+      var Kt=calc.kcal*DAYF[k],Pt=calc.p;
+      for(var i=0;i<40;i++){
+        if(base.p.p>0)b=Math.min(2,Math.max(0.4,(Pt-base.x.p-a*base.c.p)/base.p.p));
+        if(base.c.kc>0)a=Math.min(2.2,Math.max(0.4,(Kt-base.x.kc-b*base.p.kc)/base.c.kc));
+      }
+    }
+    var T={kc:0,p:0,c:0,f:0};
+    var meals=Tm.meals.map(function(m){
+      var t={kc:0,p:0,c:0,f:0},main=[],alt=[];
+      var its=m[1].map(function(src){
+        var it={t:src.t,p:src.p,alt:src.alt};
+        if(src.o&&src.o.st&&!src.alt){
+          var sc=src.g==='p'?b:src.g==='c'?a:1,o=src.o,q=Math.round(src.q*sc/o.st)*o.st;
+          q=Math.min(o.mx||src.q*3,Math.max(o.mn||o.st,q));
+          if(pf.legacy)q=src.q;
+          it.p=[[src.p[0][0],q]];
+          it.t=src.t.replace('{n}',fmtN(q*(o.m||1)));
+        }else it.t=src.t.replace('{n}',fmtN(src.q||1));
+        it.s=sumP(it.p);
+        if(it.alt)alt.push(it.t);
+        else{t.kc+=it.s.kc;t.p+=it.s.p;t.c+=it.s.c;t.f+=it.s.f;main.push(it.t)}
+        return it;
+      });
+      T.kc+=t.kc;T.p+=t.p;T.c+=t.c;T.f+=t.f;
+      var txt=main.join('، ')+(alt.length?'؛ '+alt.join('؛ '):'');
+      var tot=t.kc>0?'حدود '+Math.round(t.kc/10)*10+' کیلوکالری، '+fmt(t.p)+' گرم پروتئین':'بدون کالری';
+      return [m[0],txt,its,tot];
     });
-    T.kc+=t.kc;T.p+=t.p;T.c+=t.c;T.f+=t.f;
-    var txt=main.join('، ')+(alt.length?'؛ '+alt.join('؛ '):'');
-    var tot=t.kc>0?'حدود '+Math.round(t.kc/10)*10+' کیلوکالری، '+fmt(t.p)+' گرم پروتئین':'بدون کالری';
-    return [m[0],txt,m[1],tot];
+    var lo=Math.round((pf.w*0.033+0.2)*2)/2+((k==='train'||k==='match')?0.5:0);
+    var water=pf.legacy?(k==='gym'?'2.5 تا 3 لیتر':k==='rest'?'2.5 لیتر':'3 لیتر یا بیشتر'):(lo+' تا '+(lo+0.5)+' لیتر');
+    out[k]={n:Tm.n,kcal:Math.round(T.kc/10)*10,p:Math.round(T.p),c:Math.round(T.c),f:Math.round(T.f),water:water,meals:meals};
   });
-  FOOD[k]={n:M.n,kcal:Math.round(T.kc/10)*10,p:Math.round(T.p),c:Math.round(T.c),f:Math.round(T.f),water:M.water,meals:meals};
-});
+  FOOD=out;
+}
 var AVOID=[
  'نوشابه، شربت، آب‌میوه صنعتی و نوشیدنی انرژی‌زا',
  'سرخ‌کردنی و فست‌فود (پیتزا، همبرگر، سیب‌زمینی سرخ‌کرده)',
@@ -557,13 +589,16 @@ var AVOID=[
 
 var KAF='یک کفگیر برنج (کفگیر معمولی پلو، نه کفگیر بزرگ) حدود 90 تا 100 گرم برنج پخته و حدود نصف یک پیمانه است. یک پیمانه معادل 2 کفگیر. برای اطمینان یک بار یک کفگیر را روی ترازوی آشپزخانه وزن کن.';
 var SWAP='جایگزین یک کفگیر برنج: یک سیب‌زمینی کوچک پخته (حدود 130 گرم)، یا یک کف‌دست نان سنگک، یا نصف پیمانه جو دوسر پخته.';
-var RULES=[
- 'پروتئین روزانه حدود 140 تا 160 گرم. مثال: 3 تخم‌مرغ حدود 18، 150 گرم سینه مرغ پخته حدود 45، یک لیوان شیر یا یک کاسه ماست حدود 8، یک کاسه عدس پخته حدود 15 گرم.',
+function rulesList(){
+  var cp=calcPlan(getProf()),lo=Math.round((cp.p-10)/5)*5,hi=Math.round((cp.p+10)/5)*5;
+  return [
+ 'پروتئین روزانه حدود '+lo+' تا '+hi+' گرم. مثال: 3 تخم‌مرغ حدود 18، 150 گرم سینه مرغ پخته حدود 45، یک لیوان شیر یا یک کاسه ماست حدود 8، یک کاسه عدس پخته حدود 15 گرم.',
  'هر وعده اصلی حداقل یک کف‌دست پروتئین و یک مشت سبزی یا سالاد داشته باشد.',
- 'برنج کم مشکلی ندارد، ولی روز تمرین فوتبال و مسابقه کربوهیدرات را زیاد کم نکن. سیب‌زمینی، نان، جو دوسر، موز و خرما جایش را پر می‌کنند.',
+ 'برنج کم مشکلی ندارد، ولی روز تمرین سنگین و مسابقه کربوهیدرات را زیاد کم نکن. سیب‌زمینی، نان، جو دوسر، موز و خرما جایش را پر می‌کنند.',
  'نوشابه و انرژی‌زا نخوردن مهم‌ترین کار درستی است که الان می‌کنی. چای و قهوه بدون قند اشکال ندارد.',
  'هفته‌ای یک بار صبح ناشتا وزن و دور شکم را بسنج و ثبت کن. تصمیم‌ها را از روی این عددها بگیر، نه حدس.',
  'خواب 7 تا 8 ساعت. کم‌خوابی گرسنگی را زیاد و چربی‌سوزی و ریکاوری را کم می‌کند.'];
+}
 var PRE=[
  'تا 3 ساعت قبل از بازی: غذای چرب و سرخ‌کردنی نخور',
  'لوبیا، حبوبات زیاد، کلم و غذاهای نفاخ نخور',
@@ -587,7 +622,7 @@ function lastLog(itemId,id){
 }
 function rnd(x){return Math.max(0,Math.round(x*2)/2)}
 function sugBase(itemId,id){
-  var st=START[itemId]||0,step=STEP[itemId]||2.5,wk=weekOf(parse(id)),ph=phaseOf(wk),last=lastLog(itemId,id);
+  var st=startW(itemId),step=STEP[itemId]||2.5,wk=weekOf(parse(id)),ph=phaseOf(wk),last=lastLog(itemId,id);
   if(last){
     if(last.done&&ph.k>=2)return {kg:rnd(last.w+step),step:Math.abs(step),kind:'up'};
     return {kg:rnd(last.w),step:0,kind:'same',why:last.done?'هنوز مرحله فرم است، همین وزن را تکرار کن':'دفعه قبل کامل نشد، همین وزن را تکرار کن'};
@@ -649,7 +684,7 @@ function vCal(){
 }
 function vDay(id){
   var d=parse(id),c=cal(),day=dayOf(id),pr=progressOf(id),pl=pr.pl,w=weekOf(d),p=parts(d,c);
-  var types=[['none','عادی'],['train','تمرین فوتبال'],['match','مسابقه'],['rest','استراحت']];
+  var types=sportOn()?[['none','عادی'],['train','تمرین فوتبال'],['match','مسابقه'],['rest','استراحت']]:[['none','عادی'],['rest','استراحت']];
   var fk=foodKey(id),fd=FOOD[fk];
   var pre=day.type==='match'||dayOf(iso(addDays(d,1))).type==='match';
   var h='<section id="day">';
@@ -706,57 +741,37 @@ function vWeek(){
 var FSHORT={gym:'وزنه',train:'فوتبال',match:'مسابقه',rest:'استراحت'};
 var FCOL={gym:'#F4C430',train:'#6DD58C',match:'#FF6B6F',rest:'#9A9A94'};
 var FTINT={gym:'#FFF1BD',train:'#D9F4E1',match:'#FFD9DA',rest:'#EBEBEB'};
+var FONT_T='"B Titr","BTitr","B Titr Bold",system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif';
 function expBlocks(){
   var c=cal(),first=ui.exp,len=monthLen(first,c),lead=wdIdx(first),p0=parts(first,c),days=[],rows=[],B=[];
   for(var j=0;j<len;j++){
     var d=addDays(first,j),id=iso(d),fk=foodKey(id),pl=planFor(id);
     days.push({n:parts(d,c).d,fk:fk,kc:FOOD[fk].kcal});
-    rows.push(parts(d,c).d+' '+WD[wdIdx(d)]+': '+pl.title+'، غذا: '+FOOD[fk].n);
+    rows.push([parts(d,c).d+' '+WD[wdIdx(d)],pl.title,FOOD[fk].n,FOOD[fk].kcal,FOOD[fk].p]);
   }
   B.push({t:'title',x:'برنامه غذایی و تمرین '+monthName(first,c)+' '+p0.y});
-  B.push({t:'p',x:'قد 177، وزن حدود 76، هدف: کم‌شدن آرام چربی شکم. مقدارها تقریبی‌اند.'});
+  B.push({t:'p',x:profLine()});
   B.push({t:'grid',lead:lead,days:days});
   B.push({t:'legend'});
   B.push({t:'h',x:'روز به روز'});
-  B.push({t:'list',x:rows});
+  B.push({t:'table',cols:['روز','برنامه تمرین','منوی غذا','کالری','پروتئین (گرم)'],w:[0.19,0.27,0.26,0.12,0.16],al:['right','right','right','center','center'],rows:rows});
   B.push({t:'h',x:'منوی هر نوع روز'});
   ['gym','train','match','rest'].forEach(function(k){
+    if(!sportOn()&&(k==='train'||k==='match'))return;
     var f=FOOD[k];
-    B.push({t:'meals',k:k,head:f.n+': '+f.kcal+' کیلوکالری، '+f.p+' گرم پروتئین، '+f.c+' گرم کربوهیدرات، آب '+f.water,meals:f.meals.map(function(m){return [m[0],m[1]+(m[3]?' ('+m[3]+')':'')]})});
+    B.push({t:'meals',k:k,head:f.n,
+      sub:'کربوهیدرات '+f.c+' گرم، چربی '+f.f+' گرم، آب '+f.water,
+      tot:{kc:f.kcal,p:f.p},
+      meals:f.meals.map(function(m){return {name:m[0],tot:m[3],items:m[2].map(function(it){return {t:it.t,alt:!!it.alt,kc:Math.round(it.s.kc),p:fmt(it.s.p)}})}})});
   });
   B.push({t:'h',x:'کفگیر برنج چقدر است؟'});
   B.push({t:'p',x:KAF});B.push({t:'p',x:SWAP});
   B.push({t:'h',x:'اگر کامل طبق برنامه نخوردی'});
-  B.push({t:'list',x:RULES});
+  B.push({t:'list',x:rulesList()});
   B.push({t:'h',x:'کارت قرمز: نخور یا کم بخور'});
   B.push({t:'list',x:AVOID});
-  B.push({t:'p',x:'اگر بیماری یا حساسیت غذایی داری، با پزشک یا متخصص تغذیه مشورت کن.'});
+  B.push({t:'p',x:'اعداد کالری و پروتئین تقریبی‌اند. اگر بیماری یا حساسیت غذایی داری، با پزشک یا متخصص تغذیه مشورت کن.'});
   return {blocks:B,title:'برنامه غذایی '+monthName(first,c)+' '+p0.y};
-}
-function expHtml(E){
-  var h='<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>'+esc(E.title)+'</title><style>@page{size:A4;margin:12mm}body{font-family:system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif;color:#000;background:#fff;font-size:12px;line-height:1.7;margin:0}h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:16px 0 6px;border-bottom:2px solid #000;padding-bottom:2px;break-after:avoid}p{margin:4px 0}ul{margin:4px 0;padding-inline-start:18px}li{margin:2px 0}table.g{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}table.g td,table.g th{border:1px solid #000;text-align:center;padding:3px 0;font-size:11px}table.g td{height:44px;vertical-align:top}table.g td b{font-size:14px;display:block}.m{border:1px solid #000;border-radius:6px;padding:6px 8px;margin:8px 0;break-inside:avoid}.m h3{margin:0 0 4px;font-size:13px}.mr{display:flex;gap:8px;padding:2px 0;border-top:1px dotted #888}.mr b{min-width:90px}.lg span{display:inline-block;margin-inline-end:10px;padding:1px 8px;border:1px solid #000;border-radius:10px;font-size:11px}</style></head><body>';
-  E.blocks.forEach(function(b){
-    if(b.t==='title')h+='<h1>'+fa(esc(b.x))+'</h1>';
-    else if(b.t==='p')h+='<p>'+fa(esc(b.x))+'</p>';
-    else if(b.t==='h')h+='<h2>'+fa(esc(b.x))+'</h2>';
-    else if(b.t==='list')h+='<ul>'+b.x.map(function(x){return '<li>'+fa(esc(x))+'</li>'}).join('')+'</ul>';
-    else if(b.t==='legend')h+='<div class="lg">'+['gym','train','match','rest'].map(function(k){return '<span style="background:'+FTINT[k]+'">'+FSHORT[k]+'</span>'}).join('')+'</div>';
-    else if(b.t==='grid'){
-      h+='<table class="g"><tr>'+WDS.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr><tr>';
-      var col=0,i;
-      for(i=0;i<b.lead;i++){h+='<td></td>';col++}
-      b.days.forEach(function(d){
-        if(col===7){h+='</tr><tr>';col=0}
-        h+='<td style="background:'+FTINT[d.fk]+'"><b>'+fa(d.n)+'</b>'+FSHORT[d.fk]+'<br>'+fa(d.kc)+'</td>';col++;
-      });
-      while(col<7&&col>0){h+='<td></td>';col++}
-      h+='</tr></table>';
-    }
-    else if(b.t==='meals'){
-      h+='<div class="m"><h3 style="background:'+FTINT[b.k]+';padding:2px 6px">'+fa(esc(b.head))+'</h3>'+b.meals.map(function(m){return '<div class="mr"><b>'+fa(esc(m[0]))+'</b><span>'+fa(esc(m[1]))+'</span></div>'}).join('')+'</div>';
-    }
-  });
-  return h+'</body></html>';
 }
 function showOut(bl,name,type,note,prevUrl){
   var url=URL.createObjectURL(bl),ov=document.createElement('div');
@@ -772,72 +787,115 @@ function showOut(bl,name,type,note,prevUrl){
   };
 }
 function expCanvas(cb){
-  var E=expBlocks(),W=1080,PAD=48,CW=W-2*PAD,FONT='system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif';
-  function pass(ctx,draw){
-    var y=PAD,R=W-PAD;
-    ctx.direction='rtl';ctx.textAlign='right';ctx.textBaseline='top';
-    function ft(sz,b){ctx.font=(b?'700 ':'400 ')+sz+'px '+FONT}
-    function wrap(t,mw){
-      var ws=fa(t).split(' '),L=[],cur='';
-      ws.forEach(function(w){var tr=cur?cur+' '+w:w;if(ctx.measureText(tr).width>mw&&cur){L.push(cur);cur=w}else cur=tr});
-      if(cur)L.push(cur);return L;
+  var go=function(){
+    var E=expBlocks(),W=1080,PAD=48,CW=W-2*PAD,FONT='system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif',brk=[];
+    function pass(ctx,draw){
+      var y=PAD,R=W-PAD,L0=PAD;brk.length=0;
+      ctx.direction='rtl';ctx.textAlign='right';ctx.textBaseline='top';
+      function ft(sz,b,tt){ctx.font=tt?sz+'px '+FONT_T:(b?'700 ':'400 ')+sz+'px '+FONT}
+      function wrap(t,mw){
+        var ws=fa(t).split(' '),L=[],cur='';
+        ws.forEach(function(w){var tr=cur?cur+' '+w:w;if(ctx.measureText(tr).width>mw&&cur){L.push(cur);cur=w}else cur=tr});
+        if(cur)L.push(cur);return L;
+      }
+      function txt(t,sz,b,col,right,mw,lh,tt){
+        ft(sz,b,tt);var L=wrap(t,mw);ctx.fillStyle=col;
+        L.forEach(function(l){if(draw)ctx.fillText(l,right,y);y+=lh});
+      }
+      function row(cells,ws,o){
+        var sz=o.sz||23,lh=o.lh||34,pv=o.pv||8,xs=[],acc=0,hh=1,Ls=[];
+        ws.forEach(function(w){xs.push(acc);acc+=w*CW});
+        ft(sz,o.b,o.tt);
+        cells.forEach(function(c,i){Ls[i]=wrap(String(c),ws[i]*CW-24);hh=Math.max(hh,Ls[i].length)});
+        var h=hh*lh+2*pv;
+        if(draw){
+          if(o.bg){ctx.fillStyle=o.bg;ctx.fillRect(L0,y,CW,h)}
+          ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;ctx.strokeRect(L0+.5,y+.5,CW-1,h-1);
+          ft(sz,o.b,o.tt);
+          cells.forEach(function(c,i){
+            var xr=R-xs[i],xl=xr-ws[i]*CW,al=(o.al&&o.al[i])||'right';
+            if(i>0){ctx.beginPath();ctx.moveTo(xr+.5,y);ctx.lineTo(xr+.5,y+h);ctx.stroke()}
+            ctx.fillStyle=o.col||'#F5F5F0';ctx.textAlign=al;
+            var tx=al==='center'?(xr+xl)/2:(al==='right'?xr-12:xl+12);
+            Ls[i].forEach(function(l,k){ctx.fillText(l,tx,y+pv+k*lh)});
+          });
+          ctx.textAlign='right';
+        }
+        y+=h;if(!o.nb)brk.push(y);
+      }
+      E.blocks.forEach(function(b){
+        if(b.t==='title'){txt(b.x,46,false,'#F5F5F0',R,CW,66,true);y+=6}
+        else if(b.t==='p'){txt(b.x,26,false,'#C9C9C3',R,CW,40);y+=6;brk.push(y)}
+        else if(b.t==='h'){y+=26;brk.push(y-10);txt(b.x,36,false,'#F4C430',R,CW,54,true);if(draw){ctx.fillStyle='#F4C430';ctx.fillRect(PAD,y,CW,2)}y+=14}
+        else if(b.t==='list'){b.x.forEach(function(x){txt('• '+x,26,false,'#F5F5F0',R,CW,40);y+=4;brk.push(y)})}
+        else if(b.t==='legend'){
+          var x=R;y+=10;
+          ['gym','train','match','rest'].forEach(function(k){
+            ft(24,false);var w=ctx.measureText(FSHORT[k]).width+36;
+            if(draw){ctx.fillStyle=FCOL[k];ctx.fillRect(x-w,y,w,38);ctx.fillStyle='#000';ctx.fillText(FSHORT[k],x-18,y+4)}
+            x-=w+12;
+          });
+          y+=48;brk.push(y);
+        }
+        else if(b.t==='grid'){
+          var cw=CW/7,ch=116,i,col,row_;y+=10;
+          ft(24,false,true);
+          WDS.forEach(function(w,k){if(draw){ctx.fillStyle='#F4C430';ctx.textAlign='center';ctx.fillText(w,R-k*cw-cw/2,y);ctx.textAlign='right'}});
+          y+=44;
+          var rows=Math.ceil((b.lead+b.days.length)/7);
+          b.days.forEach(function(d,j){
+            col=(b.lead+j)%7;row_=Math.floor((b.lead+j)/7);
+            var cx=R-col*cw,cy=y+row_*ch;
+            if(draw){
+              ctx.fillStyle='#101010';ctx.fillRect(cx-cw+3,cy+3,cw-6,ch-6);
+              ctx.fillStyle=FCOL[d.fk];ctx.fillRect(cx-cw+3,cy+3,cw-6,6);
+              ctx.textAlign='center';
+              ft(32,true);ctx.fillStyle='#F5F5F0';ctx.fillText(fa(d.n),cx-cw/2,cy+16);
+              ft(22,false);ctx.fillStyle=FCOL[d.fk];ctx.fillText(FSHORT[d.fk],cx-cw/2,cy+56);
+              ctx.fillStyle='#9A9A94';ctx.fillText(fa(d.kc),cx-cw/2,cy+82);
+              ctx.textAlign='right';
+            }
+          });
+          y+=rows*ch+6;brk.push(y);
+        }
+        else if(b.t==='table'){
+          y+=10;
+          row(b.cols,b.w,{bg:'#F4C430',col:'#000',sz:23,tt:true,al:b.al,nb:true});
+          b.rows.forEach(function(r,i){row(r,b.w,{bg:i%2?'#161616':'#0c0c0c',sz:23,lh:34,pv:7,al:b.al})});
+        }
+        else if(b.t==='meals'){
+          y+=26;brk.push(y-12);
+          txt(b.head,34,false,FCOL[b.k],R,CW,50,true);
+          txt(b.sub,23,false,'#C9C9C3',R,CW,34);y+=10;
+          var ws=[0.62,0.19,0.19],al=['right','center','center'];
+          row(['خوراکی و مقدار','کالری','پروتئین (گرم)'],ws,{bg:FCOL[b.k],col:'#000',sz:23,tt:true,al:al,nb:true});
+          b.meals.forEach(function(m){
+            var hh=48;
+            if(draw){
+              ctx.fillStyle='#262626';ctx.fillRect(L0,y,CW,hh);
+              ctx.strokeStyle='rgba(255,255,255,.25)';ctx.strokeRect(L0+.5,y+.5,CW-1,hh-1);
+              ft(26,false,true);ctx.fillStyle=FCOL[b.k];ctx.textAlign='right';ctx.fillText(fa(m.name),R-12,y+8);
+              ft(21,false);ctx.fillStyle='#C9C9C3';ctx.textAlign='left';ctx.fillText(fa(m.tot),L0+12,y+12);
+              ctx.textAlign='right';
+            }
+            y+=hh;
+            m.items.forEach(function(it,i){
+              row([(it.alt&&!/^\s*یا/.test(it.t)?'یا: ':'')+it.t,it.kc,it.p],ws,{bg:i%2?'#161616':'#0c0c0c',sz:23,lh:34,pv:7,al:al,col:it.alt?'#9A9A94':'#F5F5F0'});
+            });
+          });
+          row(['جمع کل روز',b.tot.kc,b.tot.p],ws,{bg:FCOL[b.k],col:'#000',sz:25,tt:true,al:al});
+        }
+      });
+      return y+PAD;
     }
-    function txt(t,sz,b,col,right,mw,lh){
-      ft(sz,b);var L=wrap(t,mw);ctx.fillStyle=col;
-      L.forEach(function(l){if(draw)ctx.fillText(l,right,y);y+=lh});
-    }
-    E.blocks.forEach(function(b){
-      if(b.t==='title'){txt(b.x,44,true,'#F5F5F0',R,CW,60);y+=6}
-      else if(b.t==='p'){txt(b.x,26,false,'#C9C9C3',R,CW,40);y+=6}
-      else if(b.t==='h'){y+=22;txt(b.x,34,true,'#F4C430',R,CW,48);if(draw){ctx.fillStyle='#F4C430';ctx.fillRect(PAD,y,CW,2)}y+=14}
-      else if(b.t==='list'){b.x.forEach(function(x){txt('• '+x,26,false,'#F5F5F0',R,CW,40);y+=4})}
-      else if(b.t==='legend'){
-        var x=R;y+=10;
-        ['gym','train','match','rest'].forEach(function(k){
-          ft(24,false);var w=ctx.measureText(FSHORT[k]).width+36;
-          if(draw){ctx.fillStyle=FCOL[k];ctx.fillRect(x-w,y,w,38);ctx.fillStyle='#000';ctx.fillText(FSHORT[k],x-18,y+4)}
-          x-=w+12;
-        });
-        y+=48;
-      }
-      else if(b.t==='grid'){
-        var cw=CW/7,ch=116,i,col,row;y+=10;
-        ft(24,true);
-        WDS.forEach(function(w,k){if(draw){ctx.fillStyle='#9A9A94';ctx.textAlign='center';ctx.fillText(w,R-k*cw-cw/2,y);ctx.textAlign='right'}});
-        y+=40;
-        var rows=Math.ceil((b.lead+b.days.length)/7);
-        b.days.forEach(function(d,j){
-          col=(b.lead+j)%7;row=Math.floor((b.lead+j)/7);
-          var cx=R-col*cw,cy=y+row*ch;
-          if(draw){
-            ctx.fillStyle='#101010';ctx.fillRect(cx-cw+3,cy+3,cw-6,ch-6);
-            ctx.fillStyle=FCOL[d.fk];ctx.fillRect(cx-cw+3,cy+3,cw-6,6);
-            ctx.textAlign='center';
-            ft(32,true);ctx.fillStyle='#F5F5F0';ctx.fillText(fa(d.n),cx-cw/2,cy+16);
-            ft(22,false);ctx.fillStyle=FCOL[d.fk];ctx.fillText(FSHORT[d.fk],cx-cw/2,cy+56);
-            ctx.fillStyle='#9A9A94';ctx.fillText(fa(d.kc),cx-cw/2,cy+82);
-            ctx.textAlign='right';
-          }
-        });
-        y+=rows*ch+6;
-      }
-      else if(b.t==='meals'){
-        y+=14;
-        if(draw){ctx.fillStyle=FCOL[b.k];ctx.fillRect(R-8,y,8,0)}
-        var y0=y;
-        txt(b.head,28,true,FCOL[b.k],R,CW,42);y+=4;
-        b.meals.forEach(function(m){
-          txt(m[0],25,true,'#F5F5F0',R,CW,38);
-          txt(m[1],24,false,'#C9C9C3',R-24,CW-24,36);y+=6;
-        });
-      }
-    });
-    return y+PAD;
-  }
-  var tmp=document.createElement('canvas').getContext('2d'),H=Math.min(16000,Math.ceil(pass(tmp,false)));
-  var cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  var cx=cv.getContext('2d');cx.fillStyle='#000';cx.fillRect(0,0,W,H);pass(cx,true);
-  cb(cv);
+    var tmp=document.createElement('canvas').getContext('2d'),H=Math.min(16000,Math.ceil(pass(tmp,false)));
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    var cx=cv.getContext('2d');cx.fillStyle='#000';cx.fillRect(0,0,W,H);pass(cx,true);
+    cb(cv,brk.slice());
+  };
+  if(document.fonts&&document.fonts.load){
+    Promise.all([document.fonts.load('30px "B Titr"','برنامه غذایی'),document.fonts.load('700 26px "Noto Sans Arabic"')]).then(go,go);
+  }else go();
 }
 function expPng(){
   expCanvas(function(cv){
@@ -847,31 +905,48 @@ function expPng(){
     },'image/png');
   });
 }
-function mkPdf(jpg,W,H){
-  var enc=new TextEncoder(),ch=[],pos=0,xr=[],pw=W/2,ph=H/2;
+function mkPdf(pgs,W){
+  var enc=new TextEncoder(),ch=[],pos=0,xr=[],PW=595.28,PHt=841.89,n=pgs.length,sc=PW/W;
   function w(x){var b=typeof x==='string'?enc.encode(x):x;ch.push(b);pos+=b.length}
   w('%PDF-1.4\n');
   xr[1]=pos;w('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
-  xr[2]=pos;w('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
-  xr[3]=pos;w('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pw+' '+ph+'] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n');
-  xr[4]=pos;w('4 0 obj\n<< /Type /XObject /Subtype /Image /Width '+W+' /Height '+H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n');w(jpg);w('\nendstream\nendobj\n');
-  var cs='q '+pw+' 0 0 '+ph+' 0 0 cm /Im0 Do Q';
-  xr[5]=pos;w('5 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
-  var xp=pos;w('xref\n0 6\n0000000000 65535 f \n'+[1,2,3,4,5].map(function(n){return ('0000000000'+xr[n]).slice(-10)+' 00000 n \n'}).join(''));
-  w('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xp+'\n%%EOF');
+  var kids=[];for(var i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
+  xr[2]=pos;w('2 0 obj\n<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+n+' >>\nendobj\n');
+  pgs.forEach(function(p,i){
+    var a=3+3*i,b=a+1,c=a+2,ih=p.H*sc;
+    xr[a]=pos;w(a+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PHt+'] /Resources << /XObject << /Im0 '+b+' 0 R >> >> /Contents '+c+' 0 R >>\nendobj\n');
+    xr[b]=pos;w(b+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+p.W+' /Height '+p.H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.jpg.length+' >>\nstream\n');w(p.jpg);w('\nendstream\nendobj\n');
+    var cs='q 0 0 0 rg 0 0 '+PW+' '+PHt+' re f Q q '+PW+' 0 0 '+ih.toFixed(2)+' 0 '+(PHt-ih).toFixed(2)+' cm /Im0 Do Q';
+    xr[c]=pos;w(c+' 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
+  });
+  var tot=3+3*n,xp=pos,x='xref\n0 '+tot+'\n0000000000 65535 f \n';
+  for(var k=1;k<tot;k++)x+=('0000000000'+xr[k]).slice(-10)+' 00000 n \n';
+  w(x);w('trailer\n<< /Size '+tot+' /Root 1 0 R >>\nstartxref\n'+xp+'\n%%EOF');
   return new Blob(ch,{type:'application/pdf'});
 }
 function expPdf(){
-  expCanvas(function(cv){
-    cv.toBlob(function(jb){
-      if(!jb){toast('ساخت PDF ناموفق بود');return}
-      var rd=new FileReader();
-      rd.onload=function(){
-        var pdf=mkPdf(new Uint8Array(rd.result),cv.width,cv.height);
-        showOut(pdf,'food-plan.pdf','application/pdf','PDF ساخته شد. «اشتراک‌گذاری یا ذخیره» را بزن یا «باز کردن» را بزن و از خود نمایشگر PDF ذخیره کن.');
-      };
-      rd.readAsArrayBuffer(jb);
-    },'image/jpeg',0.92);
+  expCanvas(function(cv,brk){
+    var W=cv.width,H=cv.height,PH=Math.round(W*1.4142),pg=[],st=0,out=[],i=0;
+    while(st<H){
+      var en=Math.min(H,st+PH);
+      if(en<H){var best=0;brk.forEach(function(b){if(b>st+PH*0.5&&b<=st+PH&&b>best)best=b});if(best)en=best}
+      pg.push([st,en]);st=en;
+    }
+    (function nxt(){
+      if(i>=pg.length){
+        showOut(mkPdf(out,W),'food-plan.pdf','application/pdf','PDF ساخته شد ('+fa(pg.length)+' صفحه). «اشتراک‌گذاری یا ذخیره» را بزن یا «باز کردن» را بزن و از خود نمایشگر PDF ذخیره کن.');
+        return;
+      }
+      var q=pg[i++],c2=document.createElement('canvas'),hh=q[1]-q[0];
+      c2.width=W;c2.height=hh;
+      c2.getContext('2d').drawImage(cv,0,q[0],W,hh,0,0,W,hh);
+      c2.toBlob(function(jb){
+        if(!jb){toast('ساخت PDF ناموفق بود');return}
+        var rd=new FileReader();
+        rd.onload=function(){out.push({jpg:new Uint8Array(rd.result),W:W,H:hh});nxt()};
+        rd.readAsArrayBuffer(jb);
+      },'image/jpeg',0.92);
+    })();
   });
 }
 
@@ -947,7 +1022,7 @@ function matchFoods(q){
   return found.slice(0,4);
 }
 var FAQ=[
- {k:['چقدر پروتئین','پروتئین روزانه','پروتئین چقدر','پروتئین لازم','روزی چقدر پروتئین'],a:'برای تو (حدود 76 کیلو) حدود 140 تا 160 گرم پروتئین در روز مناسب است، یعنی نزدیک 1.8 تا 2.1 گرم به ازای هر کیلو. آن را بین 4 تا 5 وعده پخش کن. مثال: 3 تخم‌مرغ حدود 19 گرم، 150 گرم سینه مرغ حدود 46 گرم، یک کاسه ماست حدود 8 گرم.'},
+ {k:['چقدر پروتئین','پروتئین روزانه','پروتئین چقدر','پروتئین لازم','روزی چقدر پروتئین'],a:function(){var pf=getProf(),cp=calcPlan(pf);return 'برای تو (حدود '+pf.w+' کیلو) حدود '+(cp.p-10)+' تا '+(cp.p+10)+' گرم پروتئین در روز مناسب است. آن را بین 4 تا 5 وعده پخش کن. مثال: 3 تخم‌مرغ حدود 19 گرم، 150 گرم سینه مرغ حدود 46 گرم، یک کاسه ماست حدود 8 گرم.'}},
  {k:['آب چقدر','چقدر آب','چند لیتر','آب بخورم'],a:'روزی 2.5 تا 3 لیتر، و روز فوتبال یا مسابقه 3 لیتر یا بیشتر. اگر رنگ ادرار روشن باشد کافی است. موقع تمرین جرعه‌جرعه بخور.'},
  {k:['قبل تمرین','قبل از تمرین','قبل باشگاه','قبل از باشگاه','قبل ورزش'],a:'1 تا 2 ساعت قبل: یک موز با 2 تا 3 خرما، یا نان با ارده و شیره. غذای چرب و پرفیبر دیر هضم می‌شود، پس سنگین نخور. 30 تا 60 دقیقه قبل، یک قهوه‌ی ساده اگر تحمل می‌کنی. روز مسابقه ارده را کم کن و کربوهیدرات را بیشتر.'},
  {k:['بعد تمرین','بعد از تمرین','بعد باشگاه','بعد از باشگاه','بعد ورزش'],a:'تا یک ساعت بعد: 20 تا 30 گرم پروتئین همراه کربوهیدرات. مثلاً شیر و تخم‌مرغ، مرغ با نان یا برنج، یا یک اسکوپ وی با موز.'},
@@ -961,7 +1036,7 @@ var FAQ=[
  {k:['مکمل','چربی سوز','ال کارنیتین','قرص چربی'],a:'مکمل‌های «چربی‌سوز» تقریباً همه تبلیغاتی‌اند و بعضی خطرناکند. مکمل‌های با شواهد خوب: کراتین (3 تا 5 گرم) و در صورت نرسیدن به پروتئین، وی. هیچ‌کدام ضروری نیستند. قبل از مصرف هر مکمل با پزشک مشورت کن.'},
  {k:['کیتو','کتو','کربوهیدرات نخورم','حذف کربوهیدرات','کم کربوهیدرات','لو کارب'],a:'برای فوتبال و وزنه، کربوهیدرات سوخت اصلی است. حذف کامل باعث ضعف و افت عملکرد می‌شود. کم‌کردن برنج و شیرینی خوب است ولی روز تمرین سنگین و مسابقه کربوهیدرات را نگه دار.'},
  {k:['روزه','فستینگ','روزه داری'],a:'روزه‌داری برای فرد سالم ممکن است ولی با تمرین سنگین سخت می‌شود. پروتئین و آب را بین افطار و سحر جبران کن، تمرین را حدود یک ساعت بعد از افطار بزن و شدتش را کم کن. اگر بیماری داری با پزشک مشورت کن.'},
- {k:['چقدر کالری','کالری روزانه','کالری مصرف','کالری بخورم','کالری لازم'],a:'برنامه‌ی فعلی: روز وزنه حدود 2300، فوتبال حدود 2400، مسابقه حدود 2570 و استراحت حدود 1940 کیلوکالری. اگر دو هفته وزن و دور شکمت تغییر نکرد، 150 تا 200 کیلوکالری کم کن؛ اگر هفته‌ای بیشتر از 1 کیلو کم شد یا ضعف داشتی، اضافه کن.'},
+ {k:['چقدر کالری','کالری روزانه','کالری مصرف','کالری بخورم','کالری لازم'],a:function(){var t='برنامه‌ی فعلی: روز وزنه حدود '+FOOD.gym.kcal+(sportOn()?'، تمرین فوتبال حدود '+FOOD.train.kcal+'، مسابقه حدود '+FOOD.match.kcal:'')+' و استراحت حدود '+FOOD.rest.kcal+' کیلوکالری. ';return t+'اگر دو هفته وزن و دور شکمت تغییر نکرد (در هدف کم‌کردن چربی)، 150 تا 200 کیلوکالری کم کن؛ اگر هفته‌ای بیشتر از 1 کیلو کم شد یا ضعف داشتی، اضافه کن. در هدف حجم یا قدرت، اگر دو هفته وزنت بالا نرفت، 150 کیلوکالری اضافه کن.'}},
  {k:['بعد غذا ورزش','چقدر بعد از غذا','فاصله غذا و تمرین','بعد از غذا تمرین'],a:'بعد از وعده‌ی کامل 2 تا 3 ساعت صبر کن و بعد از وعده‌ی سبک (موز و خرما) 45 تا 60 دقیقه.'},
  {k:['نمک','پرنمک'],a:'نمک زیاد فشار خون را بالا می‌برد. در تمرین سنگین و گرما کمی نمک لازم است، ولی در روزمره غذای بسته‌بندی، کنسروی و ترشی را کم کن.'},
  {k:['گرسنه ام','گرسنه‌ام','گرسنگی','سیر نمیشم','سیر نمی شم','اشتها'],a:'پروتئین و فیبر بیشتر (سالاد، سبزی، عدس، ماست یونانی) و آب بیشتر کمک می‌کند. کم‌خوابی گرسنگی را زیاد می‌کند. بین وعده‌ها چای بدون قند، میوه یا ماست بخور.'},
@@ -1008,7 +1083,7 @@ function answer(q){
   }
   var fq=[];
   FAQ.forEach(function(x){if(fq.length<2&&x.k.some(function(k){return n.indexOf(nz(k))>=0}))fq.push(x)});
-  fq.forEach(function(x){h+=(h?'<div class="ac"></div>':'')+'<p>'+txt(x.a)+'</p>'});
+  fq.forEach(function(x){h+=(h?'<div class="ac"></div>':'')+'<p>'+txt(typeof x.a==='function'?x.a():x.a)+'</p>'});
   if(!h)h='<p>این مورد را در پایگاه دستیار پیدا نکردم. اسمش را ساده‌تر بنویس (مثلاً «تن ماهی» یا «سیب‌زمینی») یا یکی از پرسش‌های پایین را بزن. اگر درباره‌ی بیماری یا دارو می‌پرسی، بهتر است از پزشک بپرسی.</p>';
   return h;
 }
@@ -1024,36 +1099,40 @@ function vAsk(){
 function askNow(q){
   q=String(q||'').trim();if(!q)return;
   if(!ui.chat)vAsk();
-  ui.chat.push({r:'u',x:q});ui.chat.push({r:'a',h:answer(q)});
+  var ans;try{ans=answer(q)}catch(err){ans='<p>این سؤال را نتوانستم جواب بدهم. ساده‌تر بنویس، مثلاً «تن ماهی» یا «۲ کفگیر برنج».</p>'}
+  ui.chat.push({r:'u',x:q});ui.chat.push({r:'a',h:ans});
   if(ui.chat.length>16)ui.chat=ui.chat.slice(-16);
   render();
   window.scrollTo(0,document.body.scrollHeight);
   var qi=document.getElementById('q');if(qi)qi.focus({preventScroll:true});
 }
-document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.id==='q'){e.preventDefault();askNow(e.target.value)}});
+document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.keyCode===13||e.which===13)&&e.target&&e.target.id==='q'&&!e.isComposing){e.preventDefault();askNow(e.target.value)}});
+document.addEventListener('mousedown',function(e){if(e.target.closest&&e.target.closest('[data-act="ask"]'))e.preventDefault()});
+document.addEventListener('focusin',function(e){if(e.target&&e.target.id==='q')setTimeout(function(){try{e.target.scrollIntoView({block:'center'})}catch(x){}},350)});
 function vFood(){
   var key=ui.foodType||foodKey(ui.sel),f=FOOD[key];
-  var tabs=[['gym','وزنه'],['train','تمرین فوتبال'],['match','مسابقه'],['rest','استراحت']];
-  var h='<h1>برنامه غذایی</h1><p class="mut">مقدارها تقریبی‌اند و برای قد 177، وزن حدود 76 و کم‌شدن آرام چربی شکم تنظیم شده‌اند.</p>';
+  var tabs=sportOn()?[['gym','وزنه'],['train','تمرین فوتبال'],['match','مسابقه'],['rest','استراحت']]:[['gym','وزنه'],['rest','استراحت']];
+  if(!FOOD[key]||(!sportOn()&&(key==='train'||key==='match')))key='gym';f=FOOD[key];
+  var h='<h1>برنامه غذایی</h1><p class="mut">'+esc(profLine())+'</p>';
   h=fa(h);
   var ec=cal(),ep=parts(ui.exp,ec);
   h+='<div class="sec"><h3>خروجی یک‌ماهه (تصویر یا PDF)</h3><div class="top"><button class="nav" data-act="emprev" aria-label="ماه قبل">›</button><div class="mon">'+monthName(ui.exp,ec)+' '+fa(ep.y)+'</div><button class="nav" data-act="emnext" aria-label="ماه بعد">‹</button></div><div class="fld"><button class="btn" data-act="expng">دریافت تصویر</button><button class="btn ghost" data-act="expdf">دریافت PDF</button></div><p class="mut">بعد از ساخته‌شدن، «اشتراک‌گذاری یا ذخیره» را بزن.</p></div>';
   h+='<div class="seg" role="group" aria-label="نوع روز">'+tabs.map(function(t){return '<button data-act="ftype" data-v="'+t[0]+'" aria-pressed="'+(key===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
   h+='<div class="stats"><div class="stat"><b>'+fa(f.kcal)+'</b><span>کیلوکالری</span></div><div class="stat"><b>'+fa(f.p)+'</b><span>گرم پروتئین</span></div><div class="stat"><b>'+fa(f.c)+'</b><span>گرم کربوهیدرات</span></div><div class="stat"><b>'+fa(f.f)+'</b><span>گرم چربی</span></div></div>';
   h+='<div class="sec"><h2>'+f.n+'</h2>';
-  h+='<p class="mut">روی هر خوراکی بزن تا کالری و پروتئینش را ببینی.</p>';
+  h+='<p class="mut">کالری و پروتئین هر خوراکی زیرش نوشته شده. برای جزئیات بیشتر رویش بزن.</p>';
   f.meals.forEach(function(m,mi){
     h+='<div class="meal"><div class="mh"><b>'+fa(esc(m[0]))+'</b><small>'+fa(esc(m[3]))+'</small></div>';
     m[2].forEach(function(it,ii){
       var id='f'+key+mi+'_'+ii,open=!!ui.open[id];
-      h+='<button class="fi'+(it.alt?' alt':'')+'" data-act="fitem" data-v="'+id+'" aria-expanded="'+open+'">'+fa(esc(it.t))+'</button>';
+      h+='<button class="fi'+(it.alt?' alt':'')+'" data-act="fitem" data-v="'+id+'" aria-expanded="'+open+'">'+fa(esc(it.t))+'<span class="fk">'+fa(Math.round(it.s.kc))+' کیلوکالری · '+fa(fmt(it.s.p))+' گرم پروتئین</span></button>';
       if(open)h+=itemDetail(it);
     });
     h+='</div>';
   });
   h+='<div class="meal"><b>آب</b><span>'+fa(f.water)+' در روز</span></div></div>';
   h+='<div class="sec"><h3>کفگیر برنج چقدر است؟</h3><p class="mut">'+fa(esc(KAF))+'</p><p class="mut">'+fa(esc(SWAP))+'</p></div>';
-  h+='<div class="sec"><h3>اگر کامل طبق برنامه نخوردی</h3><ul>'+RULES.map(function(x){return '<li>'+fa(esc(x))+'</li>'}).join('')+'</ul></div>';
+  h+='<div class="sec"><h3>اگر کامل طبق برنامه نخوردی</h3><ul>'+rulesList().map(function(x){return '<li>'+fa(esc(x))+'</li>'}).join('')+'</ul></div>';
   h+='<div class="red"><h3><i class="cardico"></i>کارت قرمز: نخور یا کم بخور</h3><ul>'+AVOID.map(function(x){return '<li>'+fa(x)+'</li>'}).join('')+'</ul>';
   h+='<h3>قبل از مسابقه</h3><ul>'+PRE.map(function(x){return '<li>'+fa(x)+'</li>'}).join('')+'</ul></div>';
   h+='<p class="mut sec">'+fa('اگر بعد از دو هفته وزنت تغییر نکرد، حدود 150 کیلوکالری کم کن. اگر هفته‌ای بیشتر از یک کیلو کم شد، کمی اضافه کن. اگر بیماری یا حساسیت غذایی داری، با پزشک یا متخصص تغذیه مشورت کن.')+'</p>';
@@ -1220,6 +1299,7 @@ function imgPanel(it){
 }
 function banner(){
   var c=cal(),t=todayD(),f=monthFirst(t,c),h='',ups=upList(iso(t));
+  if(!getProf().saved)h+='<div class="note" style="margin:0 0 12px">برای اینکه برنامه با قد، وزن، سن و هدف خودت ساخته شود، پروفایلت را پر کن. <button class="link" data-act="gopro">پروفایل</button></div>';
   if(ups.length)h+='<div class="note up" style="margin:0 0 12px">↑ امروز باید '+fa(ups.length)+' حرکت را سنگین‌تر بزنی: '+fa(esc(ups.slice(0,3).join('، ')))+(ups.length>3?' و '+fa(ups.length-3)+' حرکت دیگر':'')+' <button class="link" data-act="today">دیدن</button></div>';
   if(parts(t,c).d===monthLen(f,c))h+='<div class="note" style="margin:0 0 12px">امروز آخر ماه است. <button class="link" data-act="gorep">دیدن گزارش این ماه</button></div>';
   return h;
@@ -1296,8 +1376,122 @@ function vReport(){
   return h;
 }
 
+
+/* ---------- profile, calculation and program builder ---------- */
+var PROF_DEF={sex:'m',age:25,h:177,w:76,goal:'fatloss',level:'beginner',days:3,sport:true,legacy:true,saved:false};
+function getProf(){return (S&&S.profile)||PROF_DEF}
+var GL={fatloss:'کم‌کردن چربی',muscle:'افزایش حجم عضله',strength:'افزایش قدرت',fitness:'تناسب اندام و سلامت'};
+function parseGoal(t){
+  var n=nz(t);
+  if(/چربی|لاغر|کاهش وزن|کم کردن وزن|شکم|چاق|وزن کم/.test(n))return 'fatloss';
+  if(/حجم|عضله|حجیم|بزرگ|ماس|پروار/.test(n))return 'muscle';
+  if(/قدرت|زور|قوی/.test(n))return 'strength';
+  if(/تناسب|سلامت|فیت|سالم|تندرست|انعطاف|حفظ/.test(n))return 'fitness';
+  return null;
+}
+function calcPlan(pf){
+  var w=pf.w,h=pf.h,a=pf.age,m=pf.sex==='m',warns=[],goal=pf.goal;
+  var bmr=10*w+6.25*h-5*a+(m?5:-161);
+  var act=pf.days<=3?1.4:pf.days===4?1.5:1.55;if(pf.sport)act+=0.05;
+  var tdee=bmr*act,bmi=w/Math.pow(h/100,2);
+  if(bmi<18.5&&goal==='fatloss'){goal='fitness';warns.push('وزن تو نسبت به قدت پایین است، پس کم‌کردن وزن توصیه نمی‌شود و هدف را روی «تناسب و سلامت» گذاشتم. اگر نگران وزنت هستی با پزشک مشورت کن.')}
+  if(a<18){if(goal==='fatloss')goal='fitness';warns.push('زیر 18 سال هستی: وزنه‌ها را سبک نگه دار، فرم درست را اولویت بده و بهتر است زیر نظر مربی یا والدین تمرین کنی. رژیم کاهش وزن توصیه نمی‌شود.')}
+  var kcal;
+  if(goal==='fatloss'){kcal=Math.max(tdee*0.8,m?1500:1200);kcal=Math.min(kcal,tdee*0.95)}
+  else if(goal==='muscle')kcal=tdee*(a<18?1.05:1.08);
+  else if(goal==='strength')kcal=tdee*1.05;
+  else kcal=tdee;
+  kcal=Math.round(kcal/10)*10;
+  var ideal=24*Math.pow(h/100,2),pref=bmi>30?ideal+0.25*(w-ideal):w;
+  var perkg={fatloss:2,muscle:1.8,strength:1.8,fitness:1.6}[goal];
+  var p=Math.round(Math.min(pref*perkg,w*2.2));
+  var f=Math.round(Math.max(kcal*0.25/9,pref*0.6));
+  var c=Math.max(0,Math.round((kcal-p*4-f*9)/4));
+  if(bmi>=35)warns.push('شاخص توده بدنی تو بالاست (BMI '+(Math.round(bmi*10)/10)+'). قبل از شروع تمرین سنگین با پزشک مشورت کن و از وزنه‌ی سبک شروع کن.');
+  if(a>=55)warns.push('بالای 55 سال هستی: گرم‌کردن را کامل انجام بده، وزنه را آرام بالا ببر و در صورت داشتن بیماری قلبی یا فشار خون با پزشک مشورت کن.');
+  warns.push('این برنامه جای پزشک نیست. در صورت بیماری، بارداری، آسیب‌دیدگی یا مصرف دارو قبل از شروع با پزشک مشورت کن.');
+  return {bmr:Math.round(bmr),tdee:Math.round(tdee),kcal:kcal,p:p,c:c,f:f,bmi:Math.round(bmi*10)/10,goal:goal,warns:warns};
+}
+var BASE_SESS=SESS,RMAP={};
+var CMP={ma1:1,ma2:1,ma3:1,ma5:1,mb1:1,mb8:1,mb3:1,mb4:1,mc11:1,mc3:1};
+function ci(id,s){var it=null;['A','B','C'].forEach(function(k){BASE_SESS[k].items.forEach(function(x){if(x.id===id&&!it)it=x})});return Object.assign({},it,{s:s||it.s})}
+BASE_SESS.UA={n:'بالاتنه A (دستگاه)',min:70,lift:1,items:[WARM,ci('ma2'),ci('ma3'),ci('ma5'),ci('mb3'),ci('mb6','3×12'),ci('mb7','3×12'),ci('mb9'),FIN]};
+BASE_SESS.UB={n:'بالاتنه B (دستگاه)',min:70,lift:1,items:[WARM,ci('mb8'),ci('mc3'),ci('mc2'),ci('mc6'),ci('ma8'),ci('mc9'),ci('mb9'),FIN]};
+BASE_SESS.LA={n:'پایین‌تنه A (دستگاه)',min:70,lift:1,items:[WARM,ci('ma1'),ci('ma4'),ci('mb4'),ci('mc13'),ci('mc8'),ci('ma7'),ci('mb9'),FIN]};
+BASE_SESS.LB={n:'پایین‌تنه B (دستگاه)',min:70,lift:1,items:[WARM,ci('mb1'),ci('ma4'),ci('mb5'),ci('mc12'),ci('mc8'),ci('ma7'),ci('mb9'),FIN]};
+['A','B','C'].forEach(function(k){BASE_SESS[k].lift=1});
+function patternFor(pf,goal){
+  var d=pf.days,cut=goal==='fatloss',fit=goal==='fitness';
+  if(d===3)return cut?['A','L1','B','L2','C','L1','R']:fit?['A','L1','B','R','C','L1','R']:['A','R','B','R','C','R','R'];
+  if(d===4)return cut?['UA','LA','L1','UB','LB','L2','R']:fit?['UA','LA','R','UB','LB','L1','R']:['UA','LA','R','UB','LB','R','R'];
+  return ['UA','LA','R','UB','LB','A','R'];
+}
+function buildProgram(pf,cp){
+  var g=cp.goal,strip=(g==='muscle'||g==='strength'),out={};
+  Object.keys(BASE_SESS).forEach(function(k){
+    var b=BASE_SESS[k],items=b.items.filter(function(it){return !(strip&&it.id==='fin')}).map(function(it){
+      var x=Object.assign({},it);
+      if(x.w&&k!=='L1'){
+        var cm=!!CMP[x.id];
+        if(g==='strength')x.s=cm?'4×5':'3×8';
+        else if(g==='muscle')x.s=cm?'4×8':x.s;
+        else if(g==='fitness')x.s=x.s.replace(/^\d×\d+/,'3×12');
+      }
+      return x;
+    });
+    if(pf.sex==='f'&&!pf.legacy){
+      var ins=k==='A'?ci('mb4'):k==='B'?ci('mc13'):null;
+      if(ins&&!items.some(function(it){return it.id===ins.id})){var at=items.length&&items[items.length-1].id==='fin'?items.length-1:items.length;items.splice(at,0,ins)}
+    }
+    out[k]={n:b.n,min:b.min,lift:b.lift,items:items};
+    items.forEach(function(it){RMAP[it.id]=it.r});
+  });
+  SESS=out;
+  PATTERN=patternFor(pf,g);
+}
+function startW(id){
+  var base=START[id]||0;if(!base)return 0;
+  var pf=getProf();if(pf.legacy)return base;
+  var r=RMAP[id]||'upper',m=pf.sex==='f',lv={beginner:1,intermediate:1.35,advanced:1.7}[pf.level]||1;
+  var ag=pf.age<18?0.8:pf.age>=55?0.8:pf.age>=45?0.9:1,x;
+  if(id==='mc3')x=base*(pf.w/76)*(m?1.2:1)*ag/lv;
+  else x=base*(pf.w/76)*(m?(r==='lower'?0.7:0.55):1)*lv*ag;
+  return x<12?Math.max(2,Math.round(x)):Math.round(x/2.5)*2.5;
+}
+var builtKey='';
+function ensureBuilt(){
+  var pf=getProf(),k=JSON.stringify(pf);
+  if(k===builtKey)return;
+  builtKey=k;var cp=calcPlan(pf);buildProgram(pf,cp);buildFood(pf,cp);
+}
+function sportOn(){return !!getProf().sport}
+var PATD={3:'3 جلسه‌ی تمام‌بدن (A، B و C) در هفته',4:'4 جلسه: بالاتنه A، پایین‌تنه A، بالاتنه B، پایین‌تنه B',5:'5 جلسه: بالاتنه و پایین‌تنه (دو بار) و یک جلسه‌ی تمام‌بدن'};
+function profLine(){var pf=getProf(),cp=calcPlan(pf);return 'قد '+pf.h+'، وزن '+pf.w+'، سن '+pf.age+'، هدف: '+GL[cp.goal]+'. مقدارها تقریبی‌اند.'}
+function vProfile(){
+  if(!ui.pf)ui.pf=Object.assign({},getProf());
+  var pf=ui.pf,g=getProf(),cp=calcPlan(g);
+  function sg(k,opts,cols){return '<div class="seg" style="grid-template-columns:repeat('+(cols||opts.length)+',1fr)">'+opts.map(function(o){return '<button data-act="pfset" data-k="'+k+'" data-v="'+o[0]+'" aria-pressed="'+(String(pf[k])===String(o[0]))+'">'+o[1]+'</button>'}).join('')+'</div>'}
+  function num(k,lb,st){return '<label>'+lb+'<input type="number" inputmode="decimal" step="'+(st||1)+'" data-act="pfin" data-k="'+k+'" value="'+esc(pf[k])+'"></label>'}
+  var h='<div class="sec" id="prof"><h3>پروفایل و ساخت برنامه</h3><p class="mut">جنسیت، سن، قد، وزن و هدفت را بنویس تا برنامه‌ی تمرین، کالری و پروتئین، وزنه‌ی شروع و غذاها برای خودت ساخته شود.</p>';
+  h+='<span class="pfl">جنسیت</span>'+sg('sex',[['m','مرد'],['f','زن']]);
+  h+='<div class="pfg">'+num('age','سن')+num('h','قد (سانتی‌متر)')+num('w','وزن (کیلوگرم)',0.1)+'</div>';
+  h+='<span class="pfl">هدفت از باشگاه</span>'+sg('goal',[['fatloss','کم‌کردن چربی'],['muscle','حجم عضله'],['strength','قدرت'],['fitness','تناسب و سلامت']],2);
+  h+='<div class="fld"><input type="text" data-act="pftext" placeholder="یا هدفت را با کلمات خودت بنویس" value="'+esc(pf.goalText||'')+'" aria-label="هدف"></div>';
+  h+='<span class="pfl">سطح تمرین</span>'+sg('level',[['beginner','مبتدی'],['intermediate','متوسط'],['advanced','پیشرفته']]);
+  h+='<span class="pfl">روزهای تمرین در هفته</span>'+sg('days',[[3,'3'],[4,'4'],[5,'5']]);
+  h+='<span class="pfl">فوتبال هم بازی می‌کنی؟</span>'+sg('sport',[['true','بله'],['false','نه']]);
+  h+='<div class="fld"><button class="btn" data-act="pfbuild">ساخت برنامه‌ی من</button></div>';
+  if(g.saved){
+    h+='<div class="stats" style="margin-top:12px"><div class="stat"><b>'+fa(cp.kcal)+'</b><span>کیلوکالری روز وزنه</span></div><div class="stat"><b>'+fa(cp.p)+'</b><span>گرم پروتئین</span></div><div class="stat"><b>'+fa(cp.c)+'</b><span>گرم کربوهیدرات</span></div><div class="stat"><b>'+fa(cp.f)+'</b><span>گرم چربی</span></div></div>';
+    h+='<p class="mut">هدف: '+fa(GL[cp.goal])+'. سوخت‌وساز پایه حدود '+fa(cp.bmr)+'، مصرف روزانه‌ی تقریبی حدود '+fa(cp.tdee)+' کیلوکالری و BMI '+fa(cp.bmi)+'.</p>';
+    h+='<p class="mut">برنامه: '+fa(PATD[g.days])+'.</p>';
+    h+='<ul>'+cp.warns.map(function(x){return '<li>'+fa(esc(x))+'</li>'}).join('')+'</ul>';
+  }else h+='<p class="mut">هنوز برنامه‌ی شخصی نساخته‌ای. الان برنامه‌ی پیش‌فرض (مرد، قد 177، وزن 76، کم‌کردن چربی) فعال است.</p>';
+  return h+'</div>';
+}
 function vSet(){
   var h='<h1>تنظیمات</h1>';
+  h+=vProfile();
   h+='<div class="sec"><h3>شروع برنامه 8 هفته‌ای</h3><p class="mut">هفته 1 از این تاریخ حساب می‌شود. مرحله‌های وزنه و سرعت بر اساس آن عوض می‌شوند.</p><div class="fld"><input type="date" data-act="start" value="'+esc(S.settings.start)+'" aria-label="تاریخ شروع"></div></div>';
   h+='<div class="sec"><h3>نوع تقویم</h3><div class="seg" style="grid-template-columns:repeat(2,1fr)"><button data-act="cal" data-v="persian" aria-pressed="'+(cal()==='persian')+'">شمسی</button><button data-act="cal" data-v="gregory" aria-pressed="'+(cal()==='gregory')+'">میلادی</button></div></div>';
   var R=S.settings.rem,RL=[['b','صبحانه'],['l','ناهار'],['pre','میان‌وعده / قبل از تمرین'],['gym','تمرین'],['d','شام']];
@@ -1380,6 +1574,7 @@ function buildIcs(){
 }
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2200)}
 function render(){
+  ensureBuilt();
   var v=document.getElementById('view');
   v.innerHTML=({cal:vCal,week:vWeek,food:vFood,ask:vAsk,prog:vReport,set:vSet})[ui.tab]();
   document.querySelectorAll('#tabs button').forEach(function(b){
@@ -1399,6 +1594,21 @@ document.addEventListener('click',function(e){
   var a=el.dataset.act,v=el.dataset.v,y=window.scrollY;
   if(a==='file')return;
   if(a==='tab'){ui.tab=v;if(v==='food')ui.foodType=null;render();window.scrollTo(0,0)}
+  else if(a==='gopro'){ui.tab='set';render();var pe=document.getElementById('prof');if(pe)pe.scrollIntoView()}
+  else if(a==='pfset'){if(!ui.pf)ui.pf=Object.assign({},getProf());var kk=el.dataset.k,vv=el.dataset.v;ui.pf[kk]=(kk==='days')?parseInt(vv,10):(kk==='sport')?(vv==='true'):vv;if(kk==='goal')ui.pf.goalText='';render();window.scrollTo(0,y)}
+  else if(a==='pfbuild'){
+    var q=Object.assign({},ui.pf||getProf());
+    q.age=Math.round(q.age);q.h=Math.round(q.h);q.w=Math.round(q.w*10)/10;
+    if(!(q.age>=14&&q.age<=75)){toast('سن باید بین 14 و 75 باشد')}
+    else if(!(q.h>=130&&q.h<=215)){toast('قد را بین 130 و 215 سانتی‌متر بنویس')}
+    else if(!(q.w>=35&&q.w<=200)){toast('وزن را بین 35 و 200 کیلوگرم بنویس')}
+    else{
+      if(q.goalText){var pg=parseGoal(q.goalText);if(pg)q.goal=pg;else toast('هدف نوشته‌شده را نفهمیدم، از گزینه‌ها استفاده شد')}
+      q.saved=true;delete q.legacy;
+      S.profile=q;ui.pf=Object.assign({},q);flush();render();toast('برنامه‌ی تو ساخته شد');
+      var pe2=document.getElementById('prof');if(pe2)pe2.scrollIntoView();
+    }
+  }
   else if(a==='fitem'){ui.open[v]=!ui.open[v];render();window.scrollTo(0,y)}
   else if(a==='ask'){var qi=document.getElementById('q');if(qi)askNow(qi.value)}
   else if(a==='askq'){askNow(v)}
@@ -1489,7 +1699,9 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target;if(!S||!t.dataset)return;
-  if(t.dataset.act==='rt'&&t.value){S.settings.rem.times[t.dataset.v]=t.value;persist();toast('ساعت یادآوری ذخیره شد')}
+  if(t.dataset.act==='pfin'){if(!ui.pf)ui.pf=Object.assign({},getProf());var nv=parseFloat(norm(t.value));ui.pf[t.dataset.k]=isNaN(nv)?'':nv}
+  else if(t.dataset.act==='pftext'){if(!ui.pf)ui.pf=Object.assign({},getProf());ui.pf.goalText=t.value}
+  else if(t.dataset.act==='rt'&&t.value){S.settings.rem.times[t.dataset.v]=t.value;persist();toast('ساعت یادآوری ذخیره شد')}
   else if(t.dataset.act==='start'&&t.value){S.settings.start=t.value;persist();render();toast('تاریخ شروع ذخیره شد')}
   else if(t.dataset.act==='file'&&t.files&&t.files[0]){
     var fr=new FileReader();
