@@ -1,4 +1,4 @@
-const C='fbgym-v14';
+const C='fbgym-v15';
 const A=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png'];
 const OPT=['BTitr.woff2','BTitr.ttf'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A).then(()=>Promise.all(OPT.map(u=>c.add(u).catch(()=>{}))))).then(()=>self.skipWaiting())));

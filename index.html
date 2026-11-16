@@ -1496,6 +1496,7 @@ function vSet(){
   h+='<div class="sec"><h3>نوع تقویم</h3><div class="seg" style="grid-template-columns:repeat(2,1fr)"><button data-act="cal" data-v="persian" aria-pressed="'+(cal()==='persian')+'">شمسی</button><button data-act="cal" data-v="gregory" aria-pressed="'+(cal()==='gregory')+'">میلادی</button></div></div>';
   var R=S.settings.rem,RL=[['b','صبحانه'],['l','ناهار'],['pre','میان‌وعده / قبل از تمرین'],['gym','تمرین'],['d','شام']];
   h+='<div class="sec"><h3>یادآوری غذا و تمرین</h3><p class="mut">ساعت هر یادآوری را تعیین کن. متن یادآوری از برنامه همان روز ساخته می‌شود، مثلاً غذای روز وزنه یا اسم تمرین.</p>'+RL.map(function(x){return '<div class="rem"><span>'+x[1]+'</span><input type="time" data-act="rt" data-v="'+x[0]+'" value="'+esc(R.times[x[0]])+'"></div>'}).join('');
+  h+='<h3 style="margin-top:14px">صدای اعلان</h3><div class="seg" style="grid-template-columns:repeat(2,1fr)">'+SND.map(function(x){return '<button data-act="snd" data-v="'+x[0]+'" aria-pressed="'+((R.sound||'default')===x[0])+'">'+x[1]+'</button>'}).join('')+'</div><p class="mut" style="margin-top:8px">با زدن هر گزینه، صدایش پخش می‌شود. صدای انتخابی فقط وقتی برنامه روی صفحه باز است پخش می‌شود. وقتی برنامه بسته یا در پس‌زمینه است، گوشی خودش صدای اعلان معمولی را پخش می‌کند.</p>';
   h+='<div class="fld"><button class="btn'+(R.on?' on':'')+'" data-act="notif">'+(R.on?'اعلان داخل برنامه روشن است':'روشن‌کردن اعلان')+'</button><button class="btn ghost" data-act="rtest">اعلان آزمایشی</button></div>';
   h+='<p class="mut">اعلان مرورگر فقط وقتی کار می‌کند که برنامه باز یا در پس‌زمینه گوشی زنده باشد. برای یادآوری مطمئن، فایل تقویم را بگیر و باز کن تا ۸ هفته یادآوری در تقویم گوشی ثبت شود.</p><div class="fld"><button class="btn" data-act="ics">دریافت فایل تقویم (۸ هفته)</button></div></div>';
   var lb=S.settings.lastBackup;
@@ -1511,6 +1512,41 @@ var toastT=null;
 
 /* ---------- reminders ---------- */
 var SLOT={b:'صبحانه',l:'ناهار',pre:'میان‌وعده',gym:'تمرین',d:'شام'};
+var SND=[['default','صدای خود گوشی'],['chime','زنگوله'],['bell','زنگ'],['beep','بوق'],['drum','طبل'],['soft','ملایم'],['whistle','سوت داور'],['off','بی‌صدا']];
+var AC=null;
+function playTone(name){
+  try{
+    var C=window.AudioContext||window.webkitAudioContext;
+    if(!C||name==='off'||name==='default')return;
+    if(!AC)AC=new C();
+    if(AC.state==='suspended')AC.resume();
+    var t0=AC.currentTime+0.03;
+    var note=function(f,st,du,ty,g,f2){
+      var o=AC.createOscillator(),ga=AC.createGain();
+      o.type=ty||'sine';o.frequency.setValueAtTime(f,t0+st);
+      if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+st+du);
+      ga.gain.setValueAtTime(0.0001,t0+st);
+      ga.gain.exponentialRampToValueAtTime(g||0.3,t0+st+0.02);
+      ga.gain.exponentialRampToValueAtTime(0.0001,t0+st+du);
+      o.connect(ga);ga.connect(AC.destination);o.start(t0+st);o.stop(t0+st+du+0.05);
+    };
+    if(name==='chime'){note(880,0,.35);note(1175,.2,.55)}
+    else if(name==='bell'){note(660,0,1.4,'sine',.35);note(1320,0,1,'sine',.15);note(1980,0,.6,'sine',.08)}
+    else if(name==='beep'){for(var i=0;i<3;i++)note(900,i*.22,.14,'square',.12)}
+    else if(name==='drum'){note(180,0,.35,'sine',.6,45);note(180,.3,.35,'sine',.6,45)}
+    else if(name==='soft'){note(523,0,.5);note(659,.25,.5);note(784,.5,.8)}
+    else if(name==='whistle'){
+      [0,.55].forEach(function(st,k){
+        var o=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain(),ga=AC.createGain(),du=k?.7:.4;
+        o.type='sine';o.frequency.value=2900;lf.frequency.value=38;lg.gain.value=140;
+        lf.connect(lg);lg.connect(o.frequency);
+        ga.gain.setValueAtTime(0.0001,t0+st);ga.gain.exponentialRampToValueAtTime(.22,t0+st+.03);ga.gain.setValueAtTime(.22,t0+st+du-.08);ga.gain.exponentialRampToValueAtTime(0.0001,t0+st+du);
+        o.connect(ga);ga.connect(AC.destination);o.start(t0+st);lf.start(t0+st);o.stop(t0+st+du+.05);lf.stop(t0+st+du+.05);
+      });
+    }
+  }catch(e){}
+}
+
 function mealText(key,slot){
   var ms=FOOD[key].meals,i,nm;
   if(slot==='pre')for(i=0;i<ms.length;i++){if(ms[i][0].indexOf('قبل از')>=0&&ms[i][0].indexOf('بازی')<0)return ms[i][1]}
@@ -1532,7 +1568,10 @@ function remFor(id,slot){
   return {t:'وقت '+SLOT[slot],b:mealText(k,slot)};
 }
 function notify(title,body,tag){
-  var opt={body:body,tag:tag||'fb',lang:'fa',dir:'rtl',icon:'icon-192.png'};
+  var snd=(S&&S.settings&&S.settings.rem&&S.settings.rem.sound)||'default';
+  var opt={body:body,tag:tag||'fb',lang:'fa',dir:'rtl',icon:'icon-192.png',vibrate:[200,100,200]};
+  if(snd==='off')opt.silent=true;
+  else if(snd!=='default'&&!document.hidden){opt.silent=true;playTone(snd)}
   try{
     if(!('Notification' in window)||Notification.permission!=='granted'){toast(title);return}
     if(navigator.serviceWorker&&navigator.serviceWorker.ready&&/^https?:/.test(location.protocol)){navigator.serviceWorker.ready.then(function(r){r.showNotification(title,opt)}).catch(function(){new Notification(title,opt)})}
@@ -1659,6 +1698,7 @@ document.addEventListener('click',function(e){
       else toast('اجازه اعلان داده نشد. از تنظیمات مرورگر اجازه بده یا فایل تقویم را بگیر');
     });
   }
+  else if(a==='snd'){S.settings.rem.sound=v;persist();playTone(v);render();window.scrollTo(0,y)}
   else if(a==='rtest'){var rm=remFor(iso(todayD()),'gym');notify(rm.t,rm.b,'test')}
   else if(a==='ics'){
     var bl=new Blob([buildIcs()],{type:'text/calendar;charset=utf-8'}),l2=document.createElement('a');
