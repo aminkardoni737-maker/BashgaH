@@ -327,16 +327,16 @@ var COACH={
   CO('k3','شوت با سیم‌کش','3×12','lower',1),
   CO('k4','پرس پا سیم‌کش ایستاده','3×15','lower',1),
   CO('k5','اسکات راه‌رفته با سیم‌کش','3×12','lower',1),
-  CO('k6','لانج به پهلو با دمبل','3×10','lower',1,'وزنه‌ی هر دمبل'),
+  CO('k6','لانج به پهلو با دمبل','3×10','lower',1),
   CO('k7','بارفیکس استرالیایی','3×12','upper'),
   CO('k8','ساق پا نشسته','3×15','lower',1),
   CO('k9','رول شکم','3×12','core')]},
  U:{n:'روز دوم: بالاتنه',min:70,items:[
   CO('k10','پروانه دستگاه','15/12/10','upper',1),
-  CO('k11','پرس سینه هالتر','3×12','upper',1,'کل وزن هالتر با صفحه‌ها'),
-  CO('k12','پرس بالاسینه هالتر','3×12','upper',1,'کل وزن هالتر با صفحه‌ها'),
+  CO('k11','پرس سینه هالتر','3×12','upper',1),
+  CO('k12','پرس بالاسینه هالتر','3×12','upper',1),
   CO('k13','پرس سرشانه دستگاه','8/10/12','upper',1),
-  CO('k14','نشر جانب دمبل','3×12','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k14','نشر جانب دمبل','3×12','upper',1),
   CO('k15','فلای معکوس','3×15','upper',1),
   CO('k16','لت از جلو دست باز','8/10/12','upper',1),
   CO('k17','قایقی با میله','8/10/12','upper',1),
@@ -344,16 +344,16 @@ var COACH={
  T:{n:'روز سوم',min:80,items:[
   CO('k19','استپ درجا','3×30','any'),
   CO('k20','استپ کراس‌فیت درجا','3×40','any'),
-  CO('k21','پروانه با هالتر','3×30','upper',1,'وزنه‌ی سبک'),
-  CO('k22','پوش‌پرس با دمبل','3×15','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k21','پروانه با هالتر','3×30','upper',1),
+  CO('k22','پوش‌پرس با دمبل','3×15','upper',1),
   CO('k23','لانج پرشی','3×12','lower'),
   CO('k24','لانج بلغاری پرشی با بوسوبال','3×10','lower'),
-  CO('k25','استپ‌آپ با دمبل','3×15','lower',1,'وزنه‌ی هر دمبل'),
+  CO('k25','استپ‌آپ با دمبل','3×15','lower',1),
   CO('k26','جلوبازو سیم‌کش','3×12','upper',1),
-  CO('k27','جلوبازو دمبل تناوبی','3×10','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k27','جلوبازو دمبل تناوبی','3×10','upper',1),
   CO('k28','جلوبازو لاری دستگاه','3×12','upper',1),
   CO('k29','پشت‌بازو سیم‌کش','3×12','upper',1),
-  CO('k30','پشت‌بازو دمبل تک‌دست خوابیده','3×12','upper',1,'وزنه‌ی دمبل'),
+  CO('k30','پشت‌بازو دمبل تک‌دست خوابیده','3×12','upper',1),
   CO('k31','پشت‌بازو سیم‌کش EZ دست جمع برعکس','3×12','upper',1)]},
  F:{n:'روز چهارم',min:75,items:[
   CO('k32','شنا سوئدی','3×تا ناتوانی','upper'),
@@ -361,8 +361,8 @@ var COACH={
   CO('k34','پلانک ساید','3×1 دقیقه (هر طرف)','core'),
   CO('k35','شکم شیب‌دار','3×15','core'),
   CO('k36','شکم طناب نشسته','3×20','core',1),
-  CO('k37','اسکات اسمیت عرض شانه','3×12','lower',1,'کل وزن میله و صفحه‌ها'),
-  CO('k38','پرس پا عرض شانه','3×12','lower',1,'کل وزن صفحه‌های دستگاه'),
+  CO('k37','اسکات اسمیت عرض شانه','3×12','lower',1),
+  CO('k38','پرس پا عرض شانه','3×12','lower',1),
   CO('k39','پشت ران خوابیده','15/12/10','lower',1),
   CO('k40','پل باسن روی زمین','3×15','lower'),
   CO('k41','پلانک','3×تا حد توان','core'),
@@ -383,26 +383,25 @@ function buildSched(){
   var st=parse(S.settings.start),idx=0,carry=[];
   for(var i=0;i<400;i++){
     var d=addDays(st,i),id=iso(d),ty=dayOf(id).type;
+    if(wdIdx(d)===0){idx=0;carry=[]}
     if(CSLOT.indexOf(wdIdx(d))>=0){carry.push(CSEQ[idx%4]);idx++}
     if(ty==='train'||ty==='match'||ty==='rest')continue;
     if(carry.length)SCHED[id]=carry.shift();
   }
 }
 function coachItems(k){
-  return [WARM].concat(COACH[k].items).map(function(it){return Object.assign({},it,{n:cname(it)})});
+  return COACH[k].items.map(function(it){return Object.assign({},it,{n:cname(it)})});
 }
 function coachPlan(id){
   var d=parse(id),day=dayOf(id),ty=day.type,k=SCHED[id],notes=[],title,min,items,counts=true,strength=false;
   var prev=iso(addDays(d,-1)),moved=false;
-  if(ty==='match'){title='روز مسابقه';min=20;items=MATCH;counts=false;notes.push('امروز مسابقه داری و باشگاه نیست. برنامه‌ی باشگاه به نزدیک‌ترین روز بعدی منتقل می‌شود.')}
-  else if(ty==='train'){title='تمرین فوتبال (استراحت از باشگاه)';min=15;items=[MOB15];counts=false;notes.push('امروز فوتبال داری و باشگاه نمی‌روی. برنامه‌ی باشگاه این روز به فردا منتقل شد.')}
-  else if(ty==='rest'){title='استراحت کامل';min=30;items=SESS.R.items;counts=false;notes.push('این روز را استراحت انتخاب کردی. برنامه‌ی باشگاه به روز بعد منتقل می‌شود.')}
+  if(ty==='match'){title='روز مسابقه (باشگاه ندارم)';min=0;items=[];counts=false;notes.push('امروز مسابقه داری و باشگاه نیست. برنامه‌ی باشگاه به نزدیک‌ترین روز بعدی منتقل می‌شود.')}
+  else if(ty==='train'){title='تمرین فوتبال (باشگاه ندارم)';min=0;items=[];counts=false;notes.push('امروز فوتبال داری و باشگاه نمی‌روی. برنامه‌ی باشگاه این روز به فردا منتقل شد.')}
+  else if(ty==='rest'){title='استراحت';min=0;items=[];counts=false;notes.push('این روز را استراحت انتخاب کردی. برنامه‌ی باشگاه به روز بعد منتقل می‌شود.')}
   else if(k){
     title=COACH[k].n;min=COACH[k].min;items=coachItems(k);strength=true;
     if(CSLOT.indexOf(wdIdx(d))<0)notes.push('این تمرین از روزهای قبل (به‌خاطر فوتبال یا استراحت) به امروز منتقل شده است.');
-    var ph=phaseOf(weekOf(d));if(ph.tip)notes.push(ph.tip);
-    notes.push('اسم حرکت‌ها را می‌توانی از «تنظیمات»، بخش «نام حرکت‌ها» عوض کنی.');
-  }else{title='استراحت کامل';min=30;items=SESS.R.items;counts=false;notes.push('امروز تمرین باشگاه نیست. ریکاوری هم بخشی از پیشرفت است.')}
+  }else{title='استراحت';min=0;items=[];counts=false}
   return {title:title,min:min,items:items,notes:notes,counts:counts,strength:strength};
 }
 function planFor(id){
