@@ -9,7 +9,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>برنامه فوتبال و باشگاه</title>
 <style>
-@font-face{font-family:"B Titr";src:local("B Titr"),local("BTitr"),local("B-Titr"),local("BTitrBold"),url("BTitr.woff2") format("woff2"),url("BTitr.ttf") format("truetype");font-display:swap}
 :root{--bg:#000000;--s1:#101010;--s2:#1a1a1a;--tx:#F5F5F0;--mut:#9A9A94;--line:rgba(255,255,255,.18);--yel:#F4C430;--red:#FF6B6F;--on-yel:#1A1403;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg)}
@@ -154,8 +153,6 @@ textarea{width:100%;min-height:76px;resize:vertical}
 .pfg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .pfg label{font-size:13px;color:var(--mut)}
 .pfg input{width:100%;margin-top:4px;color:var(--tx);background:var(--s1);text-align:center;font-size:16px}
-.fk{display:block;color:var(--yel);font-size:12.5px;line-height:1.6;margin-top:2px}
-.askrow{position:sticky;bottom:calc(68px + env(safe-area-inset-bottom));background:var(--bg);padding:8px 0;z-index:2}
 </style>
 </head>
 <body>
@@ -230,7 +227,7 @@ function dayOf(id){return S.days[id]||EMPTY}
 function ensure(id){return S.days[id]||(S.days[id]={type:'none',done:{},w:{},avoid:false,note:''})}
 function defaults(){
   var t=todayD();
-  return {v:1,settings:{start:iso(addDays(t,-wdIdx(t))),cal:'persian',rem:defRem()},days:{},weigh:[{id:1,d:iso(t),kg:'76'}]};
+  return {v:1,settings:{start:iso(addDays(t,-wdIdx(t))),cal:'persian',rem:defRem(),coach:true,names:{}},days:{},weigh:[{id:1,d:iso(t),kg:'76'}]};
 }
 var pt=null;
 function persist(){clearTimeout(pt);pt=setTimeout(function(){Store.save(S);takeSnap()},150)}
@@ -242,6 +239,8 @@ function migrate(o){
   if(!o.settings.rem||!o.settings.rem.times)o.settings.rem=defRem();
   Object.keys(o.days||{}).forEach(function(id){var dd=o.days[id];if(dd.avoid===true)dd.avoid='ok';else if(!dd.avoid)dd.avoid=''});
   if(!o.weigh)o.weigh=[];
+  if(o.settings.coach===undefined)o.settings.coach=true;
+  if(!o.settings.names)o.settings.names={};
   return o;
 }
 function dlabel(id){return new Intl.DateTimeFormat('fa-IR-u-ca-'+cal(),{day:'numeric',month:'long',year:'numeric'}).format(parse(id))}
@@ -318,7 +317,96 @@ function sessItems(b,ph){
   if(ph.k>=3&&(b==='A'||b==='B')&&getProf().sport)a.splice(a.length-1,0,PW);
   return a;
 }
+
+/* ---------- coach program (4 sessions, football shifts to next day) ---------- */
+var CO=function(id,n,sets,rg,w,t){var o={id:id,n:n,s:sets,r:rg};if(w)o.w=1;if(t)o.t=t;return o};
+var COACH={
+ L:{n:'روز اول: پا',min:70,items:[
+  CO('k1','جلو ران تک پا','15/10/12','lower',1),
+  CO('k2','پشت ران تک پا ایستاده','3×15','lower',1),
+  CO('k3','شوت با سیم‌کش','3×12','lower',1),
+  CO('k4','پرس پا سیم‌کش ایستاده','3×15','lower',1),
+  CO('k5','اسکات راه‌رفته با سیم‌کش','3×12','lower',1),
+  CO('k6','لانج به پهلو با دمبل','3×10','lower',1,'وزنه‌ی هر دمبل'),
+  CO('k7','بارفیکس استرالیایی','3×12','upper'),
+  CO('k8','ساق پا نشسته','3×15','lower',1),
+  CO('k9','رول شکم','3×12','core')]},
+ U:{n:'روز دوم: بالاتنه',min:70,items:[
+  CO('k10','پروانه دستگاه','15/12/10','upper',1),
+  CO('k11','پرس سینه هالتر','3×12','upper',1,'کل وزن هالتر با صفحه‌ها'),
+  CO('k12','پرس بالاسینه هالتر','3×12','upper',1,'کل وزن هالتر با صفحه‌ها'),
+  CO('k13','پرس سرشانه دستگاه','8/10/12','upper',1),
+  CO('k14','نشر جانب دمبل','3×12','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k15','فلای معکوس','3×15','upper',1),
+  CO('k16','لت از جلو دست باز','8/10/12','upper',1),
+  CO('k17','قایقی با میله','8/10/12','upper',1),
+  CO('k18','تی‌بار دست جمع','8/10/12','upper',1)]},
+ T:{n:'روز سوم',min:80,items:[
+  CO('k19','استپ درجا','3×30','any'),
+  CO('k20','استپ کراس‌فیت درجا','3×40','any'),
+  CO('k21','پروانه با هالتر','3×30','upper',1,'وزنه‌ی سبک'),
+  CO('k22','پوش‌پرس با دمبل','3×15','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k23','لانج پرشی','3×12','lower'),
+  CO('k24','لانج بلغاری پرشی با بوسوبال','3×10','lower'),
+  CO('k25','استپ‌آپ با دمبل','3×15','lower',1,'وزنه‌ی هر دمبل'),
+  CO('k26','جلوبازو سیم‌کش','3×12','upper',1),
+  CO('k27','جلوبازو دمبل تناوبی','3×10','upper',1,'وزنه‌ی هر دمبل'),
+  CO('k28','جلوبازو لاری دستگاه','3×12','upper',1),
+  CO('k29','پشت‌بازو سیم‌کش','3×12','upper',1),
+  CO('k30','پشت‌بازو دمبل تک‌دست خوابیده','3×12','upper',1,'وزنه‌ی دمبل'),
+  CO('k31','پشت‌بازو سیم‌کش EZ دست جمع برعکس','3×12','upper',1)]},
+ F:{n:'روز چهارم',min:75,items:[
+  CO('k32','شنا سوئدی','3×تا ناتوانی','upper'),
+  CO('k33','دیپ نیمکت یک‌طرفه','3×15','upper'),
+  CO('k34','پلانک ساید','3×1 دقیقه (هر طرف)','core'),
+  CO('k35','شکم شیب‌دار','3×15','core'),
+  CO('k36','شکم طناب نشسته','3×20','core',1),
+  CO('k37','اسکات اسمیت عرض شانه','3×12','lower',1,'کل وزن میله و صفحه‌ها'),
+  CO('k38','پرس پا عرض شانه','3×12','lower',1,'کل وزن صفحه‌های دستگاه'),
+  CO('k39','پشت ران خوابیده','15/12/10','lower',1),
+  CO('k40','پل باسن روی زمین','3×15','lower'),
+  CO('k41','پلانک','3×تا حد توان','core'),
+  CO('k42','شکم دستگاه','4×15','core',1)]}
+};
+var CSEQ=['L','U','T','F'],CSLOT=[0,1,3,4];
+var CSTART={k1:15,k2:15,k3:10,k4:15,k5:10,k6:8,k8:40,k10:30,k11:40,k12:30,k13:20,k14:6,k15:15,k16:35,k17:35,k18:30,k21:10,k22:10,k25:8,k26:15,k27:8,k28:15,k29:15,k30:6,k31:15,k36:20,k37:40,k38:60,k39:25,k42:20};
+function coachInit(){
+  Object.keys(CSTART).forEach(function(k){START[k]=CSTART[k];STEP[k]=(CSTART[k]>=30?5:2.5)});
+  STEP.k6=STEP.k14=STEP.k22=STEP.k25=STEP.k27=STEP.k30=1;
+}
+var SCHED={};
+function coachOn(){return !!(S&&S.settings&&S.settings.coach)}
+function cname(it){var nm=S&&S.settings&&S.settings.names;return (nm&&nm[it.id])||it.n}
+function buildSched(){
+  SCHED={};
+  if(!coachOn())return;
+  var st=parse(S.settings.start),idx=0,carry=[];
+  for(var i=0;i<400;i++){
+    var d=addDays(st,i),id=iso(d),ty=dayOf(id).type;
+    if(CSLOT.indexOf(wdIdx(d))>=0){carry.push(CSEQ[idx%4]);idx++}
+    if(ty==='train'||ty==='match'||ty==='rest')continue;
+    if(carry.length)SCHED[id]=carry.shift();
+  }
+}
+function coachItems(k){
+  return [WARM].concat(COACH[k].items).map(function(it){return Object.assign({},it,{n:cname(it)})});
+}
+function coachPlan(id){
+  var d=parse(id),day=dayOf(id),ty=day.type,k=SCHED[id],notes=[],title,min,items,counts=true,strength=false;
+  var prev=iso(addDays(d,-1)),moved=false;
+  if(ty==='match'){title='روز مسابقه';min=20;items=MATCH;counts=false;notes.push('امروز مسابقه داری و باشگاه نیست. برنامه‌ی باشگاه به نزدیک‌ترین روز بعدی منتقل می‌شود.')}
+  else if(ty==='train'){title='تمرین فوتبال (استراحت از باشگاه)';min=15;items=[MOB15];counts=false;notes.push('امروز فوتبال داری و باشگاه نمی‌روی. برنامه‌ی باشگاه این روز به فردا منتقل شد.')}
+  else if(ty==='rest'){title='استراحت کامل';min=30;items=SESS.R.items;counts=false;notes.push('این روز را استراحت انتخاب کردی. برنامه‌ی باشگاه به روز بعد منتقل می‌شود.')}
+  else if(k){
+    title=COACH[k].n;min=COACH[k].min;items=coachItems(k);strength=true;
+    if(CSLOT.indexOf(wdIdx(d))<0)notes.push('این تمرین از روزهای قبل (به‌خاطر فوتبال یا استراحت) به امروز منتقل شده است.');
+    var ph=phaseOf(weekOf(d));if(ph.tip)notes.push(ph.tip);
+    notes.push('اسم حرکت‌ها را می‌توانی از «تنظیمات»، بخش «نام حرکت‌ها» عوض کنی.');
+  }else{title='استراحت کامل';min=30;items=SESS.R.items;counts=false;notes.push('امروز تمرین باشگاه نیست. ریکاوری هم بخشی از پیشرفت است.')}
+  return {title:title,min:min,items:items,notes:notes,counts:counts,strength:strength};
+}
 function planFor(id){
+  if(coachOn())return coachPlan(id);
   var d=parse(id),day=dayOf(id),type=day.type,base=PATTERN[wdIdx(d)];
   var next=dayOf(iso(addDays(d,1))).type,prev=dayOf(iso(addDays(d,-1))).type;
   var ph=phaseOf(weekOf(d));
@@ -394,6 +482,7 @@ function foodKey(id){
   if(t==='match')return 'match';
   if(t==='train')return 'train';
   if(t==='rest')return 'rest';
+  if(coachOn())return SCHED[id]?'gym':'rest';
   if(dayOf(iso(addDays(d,1))).type==='match')return 'gym';
   var b=PATTERN[wdIdx(d)];
   return (SESS[b]&&SESS[b].lift)?'gym':'rest';
@@ -741,37 +830,189 @@ function vWeek(){
 var FSHORT={gym:'وزنه',train:'فوتبال',match:'مسابقه',rest:'استراحت'};
 var FCOL={gym:'#F4C430',train:'#6DD58C',match:'#FF6B6F',rest:'#9A9A94'};
 var FTINT={gym:'#FFF1BD',train:'#D9F4E1',match:'#FFD9DA',rest:'#EBEBEB'};
-var FONT_T='"B Titr","BTitr","B Titr Bold",system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif';
-function expBlocks(){
-  var c=cal(),first=ui.exp,len=monthLen(first,c),lead=wdIdx(first),p0=parts(first,c),days=[],rows=[],B=[];
+/* ---------- export engine: tables, pages, fonts ---------- */
+var FT='"BTitrUser","B Titr","BTitr",system-ui,"Noto Sans Arabic","Vazirmatn",Tahoma,sans-serif';
+var FB='system-ui,"Noto Sans Arabic","Vazirmatn",Tahoma,sans-serif';
+var PAL={
+  dark:{bg:'#000000',tx:'#F5F5F0',mut:'#A8A8A2',line:'#4a4a4a',head:'#F4C430',headTx:'#000000',zebra:'#121212',card:'#101010',tot:'#2c2510',totTx:'#F4C430',fc:{gym:'#F4C430',train:'#6DD58C',match:'#FF6B6F',rest:'#9A9A94'}},
+  light:{bg:'#FFFFFF',tx:'#000000',mut:'#444444',line:'#8a8a8a',head:'#F2B705',headTx:'#000000',zebra:'#F3F3F3',card:'#FFFFFF',tot:'#FFF1BD',totTx:'#000000',fc:{gym:'#F2B705',train:'#4CBF73',match:'#E5484D',rest:'#8A8A8A'}}
+};
+var FSHORT={gym:'وزنه',train:'فوتبال',match:'مسابقه',rest:'استراحت'};
+var userFont=false;
+function loadUserFont(){
+  return kget('fb-font').then(function(d){
+    if(!d||!d.b64)return;
+    var bin=atob(d.b64),u=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    var ff=new FontFace('BTitrUser',u.buffer);
+    return ff.load().then(function(){document.fonts.add(ff);userFont=true});
+  }).catch(function(){});
+}
+function expSpec(){
+  var c=cal(),first=ui.exp,len=monthLen(first,c),lead=wdIdx(first),p0=parts(first,c),days=[],rows=[],seen={},sess=[],sp=sportOn(),B=[];
   for(var j=0;j<len;j++){
     var d=addDays(first,j),id=iso(d),fk=foodKey(id),pl=planFor(id);
     days.push({n:parts(d,c).d,fk:fk,kc:FOOD[fk].kcal});
-    rows.push([parts(d,c).d+' '+WD[wdIdx(d)],pl.title,FOOD[fk].n,FOOD[fk].kcal,FOOD[fk].p]);
+    rows.push([parts(d,c).d+' '+WD[wdIdx(d)],pl.title,FOOD[fk].n,FOOD[fk].kcal]);
+    if(!seen[pl.title]&&pl.title!=='استراحت کامل'){seen[pl.title]=1;sess.push({title:pl.title,id:id,pl:pl})}
   }
-  B.push({t:'title',x:'برنامه غذایی و تمرین '+monthName(first,c)+' '+p0.y});
-  B.push({t:'p',x:profLine()});
+  B.push({t:'title',x:'برنامه غذایی و تمرین '+monthName(first,c)+' '+p0.y,sub:profLine()});
   B.push({t:'grid',lead:lead,days:days});
   B.push({t:'legend'});
-  B.push({t:'h',x:'روز به روز'});
-  B.push({t:'table',cols:['روز','برنامه تمرین','منوی غذا','کالری','پروتئین (گرم)'],w:[0.19,0.27,0.26,0.12,0.16],al:['right','right','right','center','center'],rows:rows});
-  B.push({t:'h',x:'منوی هر نوع روز'});
-  ['gym','train','match','rest'].forEach(function(k){
-    if(!sportOn()&&(k==='train'||k==='match'))return;
-    var f=FOOD[k];
-    B.push({t:'meals',k:k,head:f.n,
-      sub:'کربوهیدرات '+f.c+' گرم، چربی '+f.f+' گرم، آب '+f.water,
-      tot:{kc:f.kcal,p:f.p},
-      meals:f.meals.map(function(m){return {name:m[0],tot:m[3],items:m[2].map(function(it){return {t:it.t,alt:!!it.alt,kc:Math.round(it.s.kc),p:fmt(it.s.p)}})}})});
+  B.push({t:'h',x:'برنامه‌ی روز به روز'});
+  B.push({t:'table',w:[0.2,0.4,0.25,0.15],head:['روز','تمرین','نوع غذا','کالری'],rows:rows});
+  B.push({t:'h',x:'حرکت‌های تمرین این ماه'});
+  B.push({t:'p',x:'وزنه‌ی پیشنهادی برای اولین جلسه‌ی همان تمرین در این ماه است و با پیشرفتت بالاتر می‌رود. عدد وزنه یا استک دستگاه به کیلو است.'});
+  sess.forEach(function(se){
+    var rr=[];
+    se.pl.items.forEach(function(it){
+      var wt='';
+      if(it.w&&se.pl.strength){var g=sugFor(it.id,se.id);wt=g.kg+' کیلو'}
+      rr.push([it.n,it.s||'',wt]);
+    });
+    B.push({t:'table',w:[0.56,0.24,0.2],title:se.title,head:['حرکت','ست و تکرار','وزنه'],rows:rr});
   });
-  B.push({t:'h',x:'کفگیر برنج چقدر است؟'});
-  B.push({t:'p',x:KAF});B.push({t:'p',x:SWAP});
-  B.push({t:'h',x:'اگر کامل طبق برنامه نخوردی'});
-  B.push({t:'list',x:rulesList()});
-  B.push({t:'h',x:'کارت قرمز: نخور یا کم بخور'});
-  B.push({t:'list',x:AVOID});
-  B.push({t:'p',x:'اعداد کالری و پروتئین تقریبی‌اند. اگر بیماری یا حساسیت غذایی داری، با پزشک یا متخصص تغذیه مشورت کن.'});
-  return {blocks:B,title:'برنامه غذایی '+monthName(first,c)+' '+p0.y};
+  B.push({t:'h',x:'منوی هر نوع روز با کالری و پروتئین'});
+  ['gym','train','match','rest'].forEach(function(k){
+    if(!sp&&(k==='train'||k==='match'))return;
+    var f=FOOD[k],rr=[];
+    f.meals.forEach(function(m){
+      m[2].forEach(function(it,i){
+        rr.push({c:[i===0?m[0]:'',(it.alt?'اختیاری: ':'')+it.t,it.alt?'':Math.round(it.s.kc),it.alt?'':fmt(it.s.p)],grp:i===0});
+      });
+      rr.push({c:['','جمع این وعده',Math.round(m[2].reduce(function(a,it){return a+(it.alt?0:it.s.kc)},0)),fmt(m[2].reduce(function(a,it){return a+(it.alt?0:it.s.p)},0))],sub:true});
+    });
+    rr.push({c:['جمع روز','آب: '+f.water,f.kcal,f.p],tot:true});
+    B.push({t:'table',w:[0.2,0.5,0.15,0.15],title:f.n+': حدود '+f.kcal+' کیلوکالری، '+f.p+' گرم پروتئین، '+f.c+' گرم کربوهیدرات، '+f.f+' گرم چربی',fk:k,head:['وعده','خوراکی','کالری','پروتئین (گرم)'],rows:rr});
+  });
+  B.push({t:'h',x:'کفگیر برنج چقدر است؟'});B.push({t:'p',x:KAF});B.push({t:'p',x:SWAP});
+  B.push({t:'h',x:'اگر کامل طبق برنامه نخوردی'});B.push({t:'list',x:rulesList()});
+  B.push({t:'h',x:'کارت قرمز: نخور یا کم بخور'});B.push({t:'list',x:AVOID});
+  B.push({t:'p',x:'اعداد تقریبی‌اند و جای پزشک یا متخصص تغذیه نیستند. اگر بیماری یا حساسیت غذایی داری با پزشک مشورت کن.'});
+  return B;
+}
+function expRender(theme,paged,cb){
+  var P=PAL[theme],W=1080,PAD=48,CW=W-2*PAD,R=W-PAD,PH=1527;
+  var tmp=document.createElement('canvas').getContext('2d');tmp.direction='rtl';tmp.textBaseline='top';
+  function fnt(c,sz,b,t){c.font=(b?'700 ':'400 ')+sz+'px '+(t?FT:FB)}
+  function wrap(c,t,mw){
+    var ws=fa(String(t)).split(' '),L=[],cur='';
+    ws.forEach(function(w){var tr=cur?cur+' '+w:w;if(c.measureText(tr).width>mw&&cur){L.push(cur);cur=w}else cur=tr});
+    if(cur)L.push(cur);return L.length?L:[''];
+  }
+  var U=[],tabs={},spec=expSpec();
+  function textU(t,sz,bold,col,lh,o){
+    o=o||{};fnt(tmp,sz,bold,o.title);var L=wrap(tmp,t,(o.w||CW)),h=L.length*lh+(o.gap||0);
+    return {h:h,keep:o.keep,draw:function(c,y){c.direction='rtl';c.textBaseline='top';c.textAlign='right';fnt(c,sz,bold,o.title);c.fillStyle=col;L.forEach(function(l,i){c.fillText(l,R-(o.ind||0),y+i*lh)})}};
+  }
+  function bandU(t){
+    fnt(tmp,30,true,true);var L=wrap(tmp,t,CW-40),h=L.length*46+22;
+    return {h:h+18,keep:true,draw:function(c,y){c.fillStyle=P.head;c.fillRect(PAD,y+10,CW,h);c.direction='rtl';c.textBaseline='top';c.textAlign='right';fnt(c,30,true,true);c.fillStyle=P.headTx;L.forEach(function(l,i){c.fillText(l,R-20,y+10+11+i*46)})}};
+  }
+  function rowU(widths,cells,o){
+    o=o||{};var sz=o.sz||22,lh=sz*1.6,pad=10,bold=!!(o.bold||o.sub||o.tot),n=1,lines=cells.map(function(t,i){fnt(tmp,sz,bold);var l=wrap(tmp,String(t==null?'':t),widths[i]-2*pad);if(l.length>n)n=l.length;return l});
+    var h=n*lh+2*pad;
+    return {h:h,tid:o.tid,hdr:o.hdr,draw:function(c,y){
+      c.direction='rtl';c.textBaseline='top';
+      var fill=o.fill||(o.tot?P.tot:o.sub?P.zebra:(o.z?P.zebra:null));
+      if(fill){c.fillStyle=fill;c.fillRect(PAD,y,CW,h)}
+      var x=R;
+      cells.forEach(function(t,i){
+        var wd=widths[i];
+        c.strokeStyle=P.line;c.lineWidth=1;c.strokeRect(x-wd+0.5,y+0.5,wd-1,h-1);
+        fnt(c,sz,bold);c.fillStyle=o.col||(o.tot?P.totTx:P.tx);
+        var al=(o.al&&o.al[i])||'r';
+        lines[i].forEach(function(l,k){
+          if(al==='c'){c.textAlign='center';c.fillText(l,x-wd/2,y+pad+k*lh)}
+          else{c.textAlign='right';c.fillText(l,x-pad,y+pad+k*lh)}
+        });
+        x-=wd;
+      });
+      if(o.grp){c.strokeStyle=P.tx;c.lineWidth=2;c.beginPath();c.moveTo(PAD,y);c.lineTo(R,y);c.stroke()}
+    }};
+  }
+  spec.forEach(function(b,bi){
+    if(b.t==='title'){
+      U.push(textU(b.x,50,true,P.tx,70,{title:true,keep:true}));
+      U.push(textU(b.sub,24,false,P.mut,38,{gap:10}));
+    }else if(b.t==='p'){U.push(textU(b.x,24,false,P.tx,40,{gap:6}))}
+    else if(b.t==='h'){U.push(bandU(b.x))}
+    else if(b.t==='list'){b.x.forEach(function(x){U.push(textU('• '+x,24,false,P.tx,40,{gap:4}))})}
+    else if(b.t==='legend'){
+      U.push({h:56,draw:function(c,y){
+        var x=R;c.direction='rtl';c.textBaseline='top';c.textAlign='right';
+        ['gym','train','match','rest'].forEach(function(k){
+          if(!sportOn()&&(k==='train'||k==='match'))return;
+          fnt(c,22,false);var w=c.measureText(FSHORT[k]).width+36;
+          c.fillStyle=P.fc[k];c.fillRect(x-w,y+8,w,38);c.fillStyle='#000';c.fillText(FSHORT[k],x-18,y+12);x-=w+12;
+        });
+      }});
+    }else if(b.t==='grid'){
+      var cw=CW/7,ws=[cw,cw,cw,cw,cw,cw,cw];
+      U.push(rowU(ws,WDS,{bold:true,fill:P.head,col:P.headTx,al:['c','c','c','c','c','c','c'],sz:24}));
+      var total=b.lead+b.days.length,rowsN=Math.ceil(total/7);
+      for(var wr=0;wr<rowsN;wr++){
+        (function(wr){
+          U.push({h:112,draw:function(c,y){
+            c.direction='rtl';c.textBaseline='top';
+            for(var col=0;col<7;col++){
+              var idx=wr*7+col-b.lead;
+              var x=R-col*cw;
+              c.strokeStyle=P.line;c.lineWidth=1;c.strokeRect(x-cw+0.5,y+0.5,cw-1,111);
+              if(idx<0||idx>=b.days.length)continue;
+              var d=b.days[idx];
+              c.fillStyle=P.fc[d.fk];c.fillRect(x-cw+1,y+1,cw-2,8);
+              c.textAlign='center';
+              fnt(c,32,true,true);c.fillStyle=P.tx;c.fillText(fa(d.n),x-cw/2,y+14);
+              fnt(c,21,true);c.fillStyle=P.tx;c.fillText(FSHORT[d.fk],x-cw/2,y+58);
+              fnt(c,19,false);c.fillStyle=P.mut;c.fillText(fa(d.kc),x-cw/2,y+84);
+            }
+          }});
+        })(wr);
+      }
+      U.push({h:10,draw:function(){}});
+    }else if(b.t==='table'){
+      var ws2=b.w.map(function(f){return f*CW}),tid='t'+bi;
+      if(b.title)U.push(textU(b.title,26,true,b.fk?P.tx:P.tx,42,{title:true,keep:true,gap:6}));
+      var hdr=rowU(ws2,b.head,{bold:true,fill:P.head,col:P.headTx,al:b.head.map(function(h,i){return i===0?'r':'c'}),sz:22});
+      hdr.keep=true;hdr.tid=tid;hdr.isHdr=true;tabs[tid]=hdr;U.push(hdr);
+      b.rows.forEach(function(rw,ri){
+        var cells=rw.c||rw,o={tid:tid,z:ri%2===1};
+        if(rw.c){o.grp=rw.grp;o.sub=rw.sub;o.tot=rw.tot}
+        var nums=cells.length-1;
+        var al=cells.map(function(x,i){return (i>=cells.length-(b.w.length>3&&b.fk?2:b.head.length===4?1:b.head.length===3?2:1))&&i>0?'c':'r'});
+        if(b.head.length===4&&!b.fk)al=['r','r','r','c'];
+        if(b.fk)al=['r','r','c','c'];
+        if(b.head.length===3)al=['r','c','c'];
+        o.al=al;
+        U.push(rowU(ws2,cells.map(function(x){return x}),o));
+      });
+      U.push({h:18,draw:function(){}});
+    }
+  });
+  // paginate
+  var pages=[[]],y=PAD,i;
+  function lim(){return paged?PH-PAD:1e9}
+  for(i=0;i<U.length;i++){
+    var u=U[i],need=u.h;
+    if(u.keep&&U[i+1])need+=U[i+1].h+(U[i+2]&&u.hdrNext?U[i+2].h:0);
+    if(u.keep&&U[i+1]&&U[i+1].keep&&U[i+2])need+=U[i+2].h;
+    if(paged&&y+need>lim()&&y>PAD){pages.push([]);y=PAD}
+    if(paged&&y===PAD&&pages.length>1&&u.tid&&!u.isHdr&&tabs[u.tid]){var hh=tabs[u.tid];pages[pages.length-1].push({u:hh,y:y});y+=hh.h}
+    pages[pages.length-1].push({u:u,y:y});y+=u.h;
+  }
+  var H=paged?PH:Math.min(16000,Math.ceil(y+PAD)),out=[];
+  pages.forEach(function(pg){
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
+    c.fillStyle=P.bg;c.fillRect(0,0,W,H);
+    pg.forEach(function(pl){pl.u.draw(c,pl.y)});
+    out.push(cv);
+  });
+  cb(out);
+}
+function withFont(fn){
+  var pr=userFont&&document.fonts&&document.fonts.load?document.fonts.load('700 30px BTitrUser'):Promise.resolve();
+  pr.then(fn,fn);
 }
 function showOut(bl,name,type,note,prevUrl){
   var url=URL.createObjectURL(bl),ov=document.createElement('div');
@@ -786,184 +1027,60 @@ function showOut(bl,name,type,note,prevUrl){
     else{var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()}
   };
 }
-function expCanvas(cb){
-  var go=function(){
-    var E=expBlocks(),W=1080,PAD=48,CW=W-2*PAD,FONT='system-ui,"Noto Sans Arabic",Vazirmatn,Tahoma,sans-serif',brk=[];
-    function pass(ctx,draw){
-      var y=PAD,R=W-PAD,L0=PAD;brk.length=0;
-      ctx.direction='rtl';ctx.textAlign='right';ctx.textBaseline='top';
-      function ft(sz,b,tt){ctx.font=tt?sz+'px '+FONT_T:(b?'700 ':'400 ')+sz+'px '+FONT}
-      function wrap(t,mw){
-        var ws=fa(t).split(' '),L=[],cur='';
-        ws.forEach(function(w){var tr=cur?cur+' '+w:w;if(ctx.measureText(tr).width>mw&&cur){L.push(cur);cur=w}else cur=tr});
-        if(cur)L.push(cur);return L;
-      }
-      function txt(t,sz,b,col,right,mw,lh,tt){
-        ft(sz,b,tt);var L=wrap(t,mw);ctx.fillStyle=col;
-        L.forEach(function(l){if(draw)ctx.fillText(l,right,y);y+=lh});
-      }
-      function row(cells,ws,o){
-        var sz=o.sz||23,lh=o.lh||34,pv=o.pv||8,xs=[],acc=0,hh=1,Ls=[];
-        ws.forEach(function(w){xs.push(acc);acc+=w*CW});
-        ft(sz,o.b,o.tt);
-        cells.forEach(function(c,i){Ls[i]=wrap(String(c),ws[i]*CW-24);hh=Math.max(hh,Ls[i].length)});
-        var h=hh*lh+2*pv;
-        if(draw){
-          if(o.bg){ctx.fillStyle=o.bg;ctx.fillRect(L0,y,CW,h)}
-          ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;ctx.strokeRect(L0+.5,y+.5,CW-1,h-1);
-          ft(sz,o.b,o.tt);
-          cells.forEach(function(c,i){
-            var xr=R-xs[i],xl=xr-ws[i]*CW,al=(o.al&&o.al[i])||'right';
-            if(i>0){ctx.beginPath();ctx.moveTo(xr+.5,y);ctx.lineTo(xr+.5,y+h);ctx.stroke()}
-            ctx.fillStyle=o.col||'#F5F5F0';ctx.textAlign=al;
-            var tx=al==='center'?(xr+xl)/2:(al==='right'?xr-12:xl+12);
-            Ls[i].forEach(function(l,k){ctx.fillText(l,tx,y+pv+k*lh)});
-          });
-          ctx.textAlign='right';
-        }
-        y+=h;if(!o.nb)brk.push(y);
-      }
-      E.blocks.forEach(function(b){
-        if(b.t==='title'){txt(b.x,46,false,'#F5F5F0',R,CW,66,true);y+=6}
-        else if(b.t==='p'){txt(b.x,26,false,'#C9C9C3',R,CW,40);y+=6;brk.push(y)}
-        else if(b.t==='h'){y+=26;brk.push(y-10);txt(b.x,36,false,'#F4C430',R,CW,54,true);if(draw){ctx.fillStyle='#F4C430';ctx.fillRect(PAD,y,CW,2)}y+=14}
-        else if(b.t==='list'){b.x.forEach(function(x){txt('• '+x,26,false,'#F5F5F0',R,CW,40);y+=4;brk.push(y)})}
-        else if(b.t==='legend'){
-          var x=R;y+=10;
-          ['gym','train','match','rest'].forEach(function(k){
-            ft(24,false);var w=ctx.measureText(FSHORT[k]).width+36;
-            if(draw){ctx.fillStyle=FCOL[k];ctx.fillRect(x-w,y,w,38);ctx.fillStyle='#000';ctx.fillText(FSHORT[k],x-18,y+4)}
-            x-=w+12;
-          });
-          y+=48;brk.push(y);
-        }
-        else if(b.t==='grid'){
-          var cw=CW/7,ch=116,i,col,row_;y+=10;
-          ft(24,false,true);
-          WDS.forEach(function(w,k){if(draw){ctx.fillStyle='#F4C430';ctx.textAlign='center';ctx.fillText(w,R-k*cw-cw/2,y);ctx.textAlign='right'}});
-          y+=44;
-          var rows=Math.ceil((b.lead+b.days.length)/7);
-          b.days.forEach(function(d,j){
-            col=(b.lead+j)%7;row_=Math.floor((b.lead+j)/7);
-            var cx=R-col*cw,cy=y+row_*ch;
-            if(draw){
-              ctx.fillStyle='#101010';ctx.fillRect(cx-cw+3,cy+3,cw-6,ch-6);
-              ctx.fillStyle=FCOL[d.fk];ctx.fillRect(cx-cw+3,cy+3,cw-6,6);
-              ctx.textAlign='center';
-              ft(32,true);ctx.fillStyle='#F5F5F0';ctx.fillText(fa(d.n),cx-cw/2,cy+16);
-              ft(22,false);ctx.fillStyle=FCOL[d.fk];ctx.fillText(FSHORT[d.fk],cx-cw/2,cy+56);
-              ctx.fillStyle='#9A9A94';ctx.fillText(fa(d.kc),cx-cw/2,cy+82);
-              ctx.textAlign='right';
-            }
-          });
-          y+=rows*ch+6;brk.push(y);
-        }
-        else if(b.t==='table'){
-          y+=10;
-          row(b.cols,b.w,{bg:'#F4C430',col:'#000',sz:23,tt:true,al:b.al,nb:true});
-          b.rows.forEach(function(r,i){row(r,b.w,{bg:i%2?'#161616':'#0c0c0c',sz:23,lh:34,pv:7,al:b.al})});
-        }
-        else if(b.t==='meals'){
-          y+=26;brk.push(y-12);
-          txt(b.head,34,false,FCOL[b.k],R,CW,50,true);
-          txt(b.sub,23,false,'#C9C9C3',R,CW,34);y+=10;
-          var ws=[0.62,0.19,0.19],al=['right','center','center'];
-          row(['خوراکی و مقدار','کالری','پروتئین (گرم)'],ws,{bg:FCOL[b.k],col:'#000',sz:23,tt:true,al:al,nb:true});
-          b.meals.forEach(function(m){
-            var hh=48;
-            if(draw){
-              ctx.fillStyle='#262626';ctx.fillRect(L0,y,CW,hh);
-              ctx.strokeStyle='rgba(255,255,255,.25)';ctx.strokeRect(L0+.5,y+.5,CW-1,hh-1);
-              ft(26,false,true);ctx.fillStyle=FCOL[b.k];ctx.textAlign='right';ctx.fillText(fa(m.name),R-12,y+8);
-              ft(21,false);ctx.fillStyle='#C9C9C3';ctx.textAlign='left';ctx.fillText(fa(m.tot),L0+12,y+12);
-              ctx.textAlign='right';
-            }
-            y+=hh;
-            m.items.forEach(function(it,i){
-              row([(it.alt&&!/^\s*یا/.test(it.t)?'یا: ':'')+it.t,it.kc,it.p],ws,{bg:i%2?'#161616':'#0c0c0c',sz:23,lh:34,pv:7,al:al,col:it.alt?'#9A9A94':'#F5F5F0'});
-            });
-          });
-          row(['جمع کل روز',b.tot.kc,b.tot.p],ws,{bg:FCOL[b.k],col:'#000',sz:25,tt:true,al:al});
-        }
-      });
-      return y+PAD;
-    }
-    var tmp=document.createElement('canvas').getContext('2d'),H=Math.min(16000,Math.ceil(pass(tmp,false)));
-    var cv=document.createElement('canvas');cv.width=W;cv.height=H;
-    var cx=cv.getContext('2d');cx.fillStyle='#000';cx.fillRect(0,0,W,H);pass(cx,true);
-    cb(cv,brk.slice());
-  };
-  if(document.fonts&&document.fonts.load){
-    Promise.all([document.fonts.load('30px "B Titr"','برنامه غذایی'),document.fonts.load('700 26px "Noto Sans Arabic"')]).then(go,go);
-  }else go();
-}
 function expPng(){
-  expCanvas(function(cv){
-    cv.toBlob(function(bl){
-      if(!bl){toast('ساخت تصویر ناموفق بود');return}
-      showOut(bl,'food-plan.png','image/png','عکس را چند ثانیه نگه دار و «دانلود تصویر» را بزن، یا دکمه‌ی اشتراک‌گذاری را بزن و در گالری ذخیره کن.',URL.createObjectURL(bl));
-    },'image/png');
+  toast('در حال ساخت تصویر...');
+  withFont(function(){
+    expRender('dark',false,function(cs){
+      cs[0].toBlob(function(bl){
+        if(!bl){toast('ساخت تصویر ناموفق بود');return}
+        showOut(bl,'food-plan.png','image/png','عکس را چند ثانیه نگه دار و «دانلود تصویر» را بزن، یا دکمه‌ی اشتراک‌گذاری را بزن و در گالری ذخیره کن.',URL.createObjectURL(bl));
+      },'image/png');
+    });
   });
 }
-function mkPdf(pgs,W){
-  var enc=new TextEncoder(),ch=[],pos=0,xr=[],PW=595.28,PHt=841.89,n=pgs.length,sc=PW/W;
+function mkPdf(jpgs,W,H){
+  var enc=new TextEncoder(),ch=[],pos=0,xr=[],n=jpgs.length,PWp=595,PHp=842;
   function w(x){var b=typeof x==='string'?enc.encode(x):x;ch.push(b);pos+=b.length}
+  function pad10(v){return ('0000000000'+v).slice(-10)}
   w('%PDF-1.4\n');
   xr[1]=pos;w('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
   var kids=[];for(var i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
   xr[2]=pos;w('2 0 obj\n<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+n+' >>\nendobj\n');
-  pgs.forEach(function(p,i){
-    var a=3+3*i,b=a+1,c=a+2,ih=p.H*sc;
-    xr[a]=pos;w(a+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PHt+'] /Resources << /XObject << /Im0 '+b+' 0 R >> >> /Contents '+c+' 0 R >>\nendobj\n');
-    xr[b]=pos;w(b+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+p.W+' /Height '+p.H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.jpg.length+' >>\nstream\n');w(p.jpg);w('\nendstream\nendobj\n');
-    var cs='q 0 0 0 rg 0 0 '+PW+' '+PHt+' re f Q q '+PW+' 0 0 '+ih.toFixed(2)+' 0 '+(PHt-ih).toFixed(2)+' cm /Im0 Do Q';
-    xr[c]=pos;w(c+' 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
-  });
-  var tot=3+3*n,xp=pos,x='xref\n0 '+tot+'\n0000000000 65535 f \n';
-  for(var k=1;k<tot;k++)x+=('0000000000'+xr[k]).slice(-10)+' 00000 n \n';
+  for(i=0;i<n;i++){
+    var po=3+3*i,io=4+3*i,co=5+3*i;
+    xr[po]=pos;w(po+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PWp+' '+PHp+'] /Resources << /XObject << /Im0 '+io+' 0 R >> >> /Contents '+co+' 0 R >>\nendobj\n');
+    xr[io]=pos;w(io+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+W+' /Height '+H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpgs[i].length+' >>\nstream\n');w(jpgs[i]);w('\nendstream\nendobj\n');
+    var cs='q '+PWp+' 0 0 '+PHp+' 0 0 cm /Im0 Do Q';
+    xr[co]=pos;w(co+' 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
+  }
+  var xp=pos,tot=3+3*n;
+  var x='xref\n0 '+tot+'\n0000000000 65535 f \n';
+  for(i=1;i<tot;i++)x+=pad10(xr[i])+' 00000 n \n';
   w(x);w('trailer\n<< /Size '+tot+' /Root 1 0 R >>\nstartxref\n'+xp+'\n%%EOF');
   return new Blob(ch,{type:'application/pdf'});
 }
 function expPdf(){
-  expCanvas(function(cv,brk){
-    var W=cv.width,H=cv.height,PH=Math.round(W*1.4142),pg=[],st=0,out=[],i=0;
-    while(st<H){
-      var en=Math.min(H,st+PH);
-      if(en<H){var best=0;brk.forEach(function(b){if(b>st+PH*0.5&&b<=st+PH&&b>best)best=b});if(best)en=best}
-      pg.push([st,en]);st=en;
-    }
-    (function nxt(){
-      if(i>=pg.length){
-        showOut(mkPdf(out,W),'food-plan.pdf','application/pdf','PDF ساخته شد ('+fa(pg.length)+' صفحه). «اشتراک‌گذاری یا ذخیره» را بزن یا «باز کردن» را بزن و از خود نمایشگر PDF ذخیره کن.');
-        return;
-      }
-      var q=pg[i++],c2=document.createElement('canvas'),hh=q[1]-q[0];
-      c2.width=W;c2.height=hh;
-      c2.getContext('2d').drawImage(cv,0,q[0],W,hh,0,0,W,hh);
-      c2.toBlob(function(jb){
-        if(!jb){toast('ساخت PDF ناموفق بود');return}
-        var rd=new FileReader();
-        rd.onload=function(){out.push({jpg:new Uint8Array(rd.result),W:W,H:hh});nxt()};
-        rd.readAsArrayBuffer(jb);
-      },'image/jpeg',0.92);
-    })();
+  toast('در حال ساخت PDF...');
+  withFont(function(){
+    expRender('light',true,function(cs){
+      var res=[],done=0;
+      cs.forEach(function(cv,i){
+        cv.toBlob(function(jb){
+          if(!jb){toast('ساخت PDF ناموفق بود');return}
+          var rd=new FileReader();
+          rd.onload=function(){
+            res[i]=new Uint8Array(rd.result);done++;
+            if(done===cs.length){
+              var pdf=mkPdf(res,cs[0].width,cs[0].height);
+              showOut(pdf,'food-plan.pdf','application/pdf','PDF ساخته شد ('+fa(cs.length)+' صفحه). «اشتراک‌گذاری یا ذخیره» را بزن یا «باز کردن» را بزن و از خود نمایشگر PDF ذخیره کن.');
+            }
+          };
+          rd.readAsArrayBuffer(jb);
+        },'image/jpeg',0.93);
+      });
+    });
   });
 }
-
-function qtxt(q){return q===0.5?'نیم':fmt(q)}
-function itemDetail(it){
-  var t=it.s,h='<div class="fd">';
-  if(it.p.length===1){
-    var d=DBI[it.p[0][0]],q=it.p[0][1];
-    h+='<div class="ln"><b>'+fa(esc(d.n))+'</b><span>'+(q===1?'':fa(qtxt(q))+' × ')+fa(esc(d.u))+'</span></div>';
-  }else{
-    it.p.forEach(function(x){var d=DBI[x[0]];h+='<div class="ln"><span>'+fa(esc(d.n))+'</span><span>'+fa(qtxt(x[1]))+' × '+fa(esc(d.u))+'</span></div>'});
-  }
-  h+='<div class="nums"><div><b>'+fa(Math.round(t.kc))+'</b><span>کیلوکالری</span></div><div><b>'+fa(fmt(t.p))+'</b><span>پروتئین</span></div><div><b>'+fa(fmt(t.c))+'</b><span>کربوهیدرات</span></div><div><b>'+fa(fmt(t.f))+'</b><span>چربی</span></div></div>';
-  if(it.p.length===1)h+='<div>'+fa(esc(DBI[it.p[0][0]].note))+'</div>';
-  return h+'<div class="mut" style="margin-top:4px">اعداد تقریبی‌اند. اگر مقدارت فرق دارد از دستیار بپرس.</div></div>';
-}
-
 /* ---------- nutrition assistant (offline) ---------- */
 function nz(t){
   return String(t).replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200d]/g,' ').replace(/[ـًٌٍَُِّْ]/g,'')
@@ -1099,16 +1216,13 @@ function vAsk(){
 function askNow(q){
   q=String(q||'').trim();if(!q)return;
   if(!ui.chat)vAsk();
-  var ans;try{ans=answer(q)}catch(err){ans='<p>این سؤال را نتوانستم جواب بدهم. ساده‌تر بنویس، مثلاً «تن ماهی» یا «۲ کفگیر برنج».</p>'}
-  ui.chat.push({r:'u',x:q});ui.chat.push({r:'a',h:ans});
+  ui.chat.push({r:'u',x:q});ui.chat.push({r:'a',h:answer(q)});
   if(ui.chat.length>16)ui.chat=ui.chat.slice(-16);
   render();
   window.scrollTo(0,document.body.scrollHeight);
   var qi=document.getElementById('q');if(qi)qi.focus({preventScroll:true});
 }
-document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.keyCode===13||e.which===13)&&e.target&&e.target.id==='q'&&!e.isComposing){e.preventDefault();askNow(e.target.value)}});
-document.addEventListener('mousedown',function(e){if(e.target.closest&&e.target.closest('[data-act="ask"]'))e.preventDefault()});
-document.addEventListener('focusin',function(e){if(e.target&&e.target.id==='q')setTimeout(function(){try{e.target.scrollIntoView({block:'center'})}catch(x){}},350)});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.id==='q'){e.preventDefault();askNow(e.target.value)}});
 function vFood(){
   var key=ui.foodType||foodKey(ui.sel),f=FOOD[key];
   var tabs=sportOn()?[['gym','وزنه'],['train','تمرین فوتبال'],['match','مسابقه'],['rest','استراحت']]:[['gym','وزنه'],['rest','استراحت']];
@@ -1120,12 +1234,12 @@ function vFood(){
   h+='<div class="seg" role="group" aria-label="نوع روز">'+tabs.map(function(t){return '<button data-act="ftype" data-v="'+t[0]+'" aria-pressed="'+(key===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
   h+='<div class="stats"><div class="stat"><b>'+fa(f.kcal)+'</b><span>کیلوکالری</span></div><div class="stat"><b>'+fa(f.p)+'</b><span>گرم پروتئین</span></div><div class="stat"><b>'+fa(f.c)+'</b><span>گرم کربوهیدرات</span></div><div class="stat"><b>'+fa(f.f)+'</b><span>گرم چربی</span></div></div>';
   h+='<div class="sec"><h2>'+f.n+'</h2>';
-  h+='<p class="mut">کالری و پروتئین هر خوراکی زیرش نوشته شده. برای جزئیات بیشتر رویش بزن.</p>';
+  h+='<p class="mut">روی هر خوراکی بزن تا کالری و پروتئینش را ببینی.</p>';
   f.meals.forEach(function(m,mi){
     h+='<div class="meal"><div class="mh"><b>'+fa(esc(m[0]))+'</b><small>'+fa(esc(m[3]))+'</small></div>';
     m[2].forEach(function(it,ii){
       var id='f'+key+mi+'_'+ii,open=!!ui.open[id];
-      h+='<button class="fi'+(it.alt?' alt':'')+'" data-act="fitem" data-v="'+id+'" aria-expanded="'+open+'">'+fa(esc(it.t))+'<span class="fk">'+fa(Math.round(it.s.kc))+' کیلوکالری · '+fa(fmt(it.s.p))+' گرم پروتئین</span></button>';
+      h+='<button class="fi'+(it.alt?' alt':'')+'" data-act="fitem" data-v="'+id+'" aria-expanded="'+open+'">'+fa(esc(it.t))+'</button>';
       if(open)h+=itemDetail(it);
     });
     h+='</div>';
@@ -1491,12 +1605,21 @@ function vProfile(){
 }
 function vSet(){
   var h='<h1>تنظیمات</h1>';
+  h+='<div class="sec"><h3>نوع برنامه‌ی باشگاه</h3><div class="seg" role="group" aria-label="نوع برنامه"><button data-act="coach" data-v="1" aria-pressed="'+coachOn()+'">برنامه‌ی مربی من</button><button data-act="coach" data-v="0" aria-pressed="'+(!coachOn())+'">برنامه‌ی خودکار</button></div><p class="mut">در برنامه‌ی مربی: شنبه پا، یکشنبه بالاتنه، سه‌شنبه روز سوم و چهارشنبه روز چهارم. هر روزی که «تمرین فوتبال»، «مسابقه» یا «استراحت» علامت بزنی باشگاه نیست و تمرینش به روز بعد می‌رود.</p></div>';
+  if(coachOn()){
+    h+='<div class="sec"><h3>نام حرکت‌ها</h3><p class="mut">هر اسمی را که می‌خواهی عوض کن. بعد از نوشتن، بیرون کادر بزن تا ذخیره شود. برای برگرداندن اسم اصلی، کادر را خالی کن.</p>';
+    CSEQ.forEach(function(k){
+      h+='<h4 style="margin:12px 0 4px">'+fa(esc(COACH[k].n))+'</h4>';
+      COACH[k].items.forEach(function(it){h+='<div class="fld"><input type="text" data-act="ren" data-id="'+it.id+'" value="'+esc((S.settings.names&&S.settings.names[it.id])||'')+'" placeholder="'+esc(it.n)+'" aria-label="'+esc(it.n)+'"></div>'});
+    });
+    h+='</div>';
+  }
   h+=vProfile();
+  h+='<div class="sec"><h3>فونت تیتر خروجی (اختیاری)</h3><p class="mut">فونت «B Titr» مجانی نیست و داخل برنامه نمی‌تواند باشد. اگر فایل فونت (ttf یا otf) را داری، از اینجا انتخابش کن تا تیترهای عکس و PDF با آن ساخته شود. فونت فقط روی گوشی خودت می‌ماند.</p><div class="fld"><input type="file" accept=".ttf,.otf,.woff,.woff2" data-act="fontfile" aria-label="فایل فونت"></div><p class="mut">وضعیت: '+(userFont?'فونت انتخاب‌شده فعال است':'فونت سفارشی انتخاب نشده')+'</p>'+(userFont?'<div class="fld"><button class="btn ghost" data-act="fontdel">حذف فونت</button></div>':'')+'</div>';
   h+='<div class="sec"><h3>شروع برنامه 8 هفته‌ای</h3><p class="mut">هفته 1 از این تاریخ حساب می‌شود. مرحله‌های وزنه و سرعت بر اساس آن عوض می‌شوند.</p><div class="fld"><input type="date" data-act="start" value="'+esc(S.settings.start)+'" aria-label="تاریخ شروع"></div></div>';
   h+='<div class="sec"><h3>نوع تقویم</h3><div class="seg" style="grid-template-columns:repeat(2,1fr)"><button data-act="cal" data-v="persian" aria-pressed="'+(cal()==='persian')+'">شمسی</button><button data-act="cal" data-v="gregory" aria-pressed="'+(cal()==='gregory')+'">میلادی</button></div></div>';
   var R=S.settings.rem,RL=[['b','صبحانه'],['l','ناهار'],['pre','میان‌وعده / قبل از تمرین'],['gym','تمرین'],['d','شام']];
   h+='<div class="sec"><h3>یادآوری غذا و تمرین</h3><p class="mut">ساعت هر یادآوری را تعیین کن. متن یادآوری از برنامه همان روز ساخته می‌شود، مثلاً غذای روز وزنه یا اسم تمرین.</p>'+RL.map(function(x){return '<div class="rem"><span>'+x[1]+'</span><input type="time" data-act="rt" data-v="'+x[0]+'" value="'+esc(R.times[x[0]])+'"></div>'}).join('');
-  h+='<h3 style="margin-top:14px">صدای اعلان</h3><div class="seg" style="grid-template-columns:repeat(2,1fr)">'+SND.map(function(x){return '<button data-act="snd" data-v="'+x[0]+'" aria-pressed="'+((R.sound||'default')===x[0])+'">'+x[1]+'</button>'}).join('')+'</div><p class="mut" style="margin-top:8px">با زدن هر گزینه، صدایش پخش می‌شود. صدای انتخابی فقط وقتی برنامه روی صفحه باز است پخش می‌شود. وقتی برنامه بسته یا در پس‌زمینه است، گوشی خودش صدای اعلان معمولی را پخش می‌کند.</p>';
   h+='<div class="fld"><button class="btn'+(R.on?' on':'')+'" data-act="notif">'+(R.on?'اعلان داخل برنامه روشن است':'روشن‌کردن اعلان')+'</button><button class="btn ghost" data-act="rtest">اعلان آزمایشی</button></div>';
   h+='<p class="mut">اعلان مرورگر فقط وقتی کار می‌کند که برنامه باز یا در پس‌زمینه گوشی زنده باشد. برای یادآوری مطمئن، فایل تقویم را بگیر و باز کن تا ۸ هفته یادآوری در تقویم گوشی ثبت شود.</p><div class="fld"><button class="btn" data-act="ics">دریافت فایل تقویم (۸ هفته)</button></div></div>';
   var lb=S.settings.lastBackup;
@@ -1512,41 +1635,6 @@ var toastT=null;
 
 /* ---------- reminders ---------- */
 var SLOT={b:'صبحانه',l:'ناهار',pre:'میان‌وعده',gym:'تمرین',d:'شام'};
-var SND=[['default','صدای خود گوشی'],['chime','زنگوله'],['bell','زنگ'],['beep','بوق'],['drum','طبل'],['soft','ملایم'],['whistle','سوت داور'],['off','بی‌صدا']];
-var AC=null;
-function playTone(name){
-  try{
-    var C=window.AudioContext||window.webkitAudioContext;
-    if(!C||name==='off'||name==='default')return;
-    if(!AC)AC=new C();
-    if(AC.state==='suspended')AC.resume();
-    var t0=AC.currentTime+0.03;
-    var note=function(f,st,du,ty,g,f2){
-      var o=AC.createOscillator(),ga=AC.createGain();
-      o.type=ty||'sine';o.frequency.setValueAtTime(f,t0+st);
-      if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+st+du);
-      ga.gain.setValueAtTime(0.0001,t0+st);
-      ga.gain.exponentialRampToValueAtTime(g||0.3,t0+st+0.02);
-      ga.gain.exponentialRampToValueAtTime(0.0001,t0+st+du);
-      o.connect(ga);ga.connect(AC.destination);o.start(t0+st);o.stop(t0+st+du+0.05);
-    };
-    if(name==='chime'){note(880,0,.35);note(1175,.2,.55)}
-    else if(name==='bell'){note(660,0,1.4,'sine',.35);note(1320,0,1,'sine',.15);note(1980,0,.6,'sine',.08)}
-    else if(name==='beep'){for(var i=0;i<3;i++)note(900,i*.22,.14,'square',.12)}
-    else if(name==='drum'){note(180,0,.35,'sine',.6,45);note(180,.3,.35,'sine',.6,45)}
-    else if(name==='soft'){note(523,0,.5);note(659,.25,.5);note(784,.5,.8)}
-    else if(name==='whistle'){
-      [0,.55].forEach(function(st,k){
-        var o=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain(),ga=AC.createGain(),du=k?.7:.4;
-        o.type='sine';o.frequency.value=2900;lf.frequency.value=38;lg.gain.value=140;
-        lf.connect(lg);lg.connect(o.frequency);
-        ga.gain.setValueAtTime(0.0001,t0+st);ga.gain.exponentialRampToValueAtTime(.22,t0+st+.03);ga.gain.setValueAtTime(.22,t0+st+du-.08);ga.gain.exponentialRampToValueAtTime(0.0001,t0+st+du);
-        o.connect(ga);ga.connect(AC.destination);o.start(t0+st);lf.start(t0+st);o.stop(t0+st+du+.05);lf.stop(t0+st+du+.05);
-      });
-    }
-  }catch(e){}
-}
-
 function mealText(key,slot){
   var ms=FOOD[key].meals,i,nm;
   if(slot==='pre')for(i=0;i<ms.length;i++){if(ms[i][0].indexOf('قبل از')>=0&&ms[i][0].indexOf('بازی')<0)return ms[i][1]}
@@ -1568,10 +1656,7 @@ function remFor(id,slot){
   return {t:'وقت '+SLOT[slot],b:mealText(k,slot)};
 }
 function notify(title,body,tag){
-  var snd=(S&&S.settings&&S.settings.rem&&S.settings.rem.sound)||'default';
-  var opt={body:body,tag:tag||'fb',lang:'fa',dir:'rtl',icon:'icon-192.png',vibrate:[200,100,200]};
-  if(snd==='off')opt.silent=true;
-  else if(snd!=='default'&&!document.hidden){opt.silent=true;playTone(snd)}
+  var opt={body:body,tag:tag||'fb',lang:'fa',dir:'rtl',icon:'icon-192.png'};
   try{
     if(!('Notification' in window)||Notification.permission!=='granted'){toast(title);return}
     if(navigator.serviceWorker&&navigator.serviceWorker.ready&&/^https?:/.test(location.protocol)){navigator.serviceWorker.ready.then(function(r){r.showNotification(title,opt)}).catch(function(){new Notification(title,opt)})}
@@ -1613,7 +1698,9 @@ function buildIcs(){
 }
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2200)}
 function render(){
+  coachInit();
   ensureBuilt();
+  buildSched();
   var v=document.getElementById('view');
   v.innerHTML=({cal:vCal,week:vWeek,food:vFood,ask:vAsk,prog:vReport,set:vSet})[ui.tab]();
   document.querySelectorAll('#tabs button').forEach(function(b){
@@ -1648,6 +1735,8 @@ document.addEventListener('click',function(e){
       var pe2=document.getElementById('prof');if(pe2)pe2.scrollIntoView();
     }
   }
+  else if(a==='coach'){S.settings.coach=(v==='1');flush();render();window.scrollTo(0,y);toast(v==='1'?'برنامه‌ی مربی فعال شد':'برنامه‌ی خودکار فعال شد')}
+  else if(a==='fontdel'){kset('fb-font',null);userFont=false;render();toast('فونت حذف شد. برای اعمال کامل، برنامه را یک بار ببند و باز کن')}
   else if(a==='fitem'){ui.open[v]=!ui.open[v];render();window.scrollTo(0,y)}
   else if(a==='ask'){var qi=document.getElementById('q');if(qi)askNow(qi.value)}
   else if(a==='askq'){askNow(v)}
@@ -1698,7 +1787,6 @@ document.addEventListener('click',function(e){
       else toast('اجازه اعلان داده نشد. از تنظیمات مرورگر اجازه بده یا فایل تقویم را بگیر');
     });
   }
-  else if(a==='snd'){S.settings.rem.sound=v;persist();playTone(v);render();window.scrollTo(0,y)}
   else if(a==='rtest'){var rm=remFor(iso(todayD()),'gym');notify(rm.t,rm.b,'test')}
   else if(a==='ics'){
     var bl=new Blob([buildIcs()],{type:'text/calendar;charset=utf-8'}),l2=document.createElement('a');
@@ -1739,7 +1827,24 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target;if(!S||!t.dataset)return;
-  if(t.dataset.act==='pfin'){if(!ui.pf)ui.pf=Object.assign({},getProf());var nv=parseFloat(norm(t.value));ui.pf[t.dataset.k]=isNaN(nv)?'':nv}
+  if(t.dataset.act==='ren'){if(!S.settings.names)S.settings.names={};var rv=t.value.trim();if(rv)S.settings.names[t.dataset.id]=rv;else delete S.settings.names[t.dataset.id];flush();toast('نام ذخیره شد')}
+  else if(t.dataset.act==='fontfile'){
+    var ff0=t.files&&t.files[0];
+    if(ff0){
+      if(ff0.size>3000000){toast('فایل فونت بزرگ‌تر از 3 مگابایت است')}
+      else{
+        var fr0=new FileReader();
+        fr0.onload=function(){
+          var u8=new Uint8Array(fr0.result),bin='';
+          for(var i0=0;i0<u8.length;i0+=8000)bin+=String.fromCharCode.apply(null,u8.subarray(i0,i0+8000));
+          var b64=btoa(bin);
+          kset('fb-font',{name:ff0.name,b64:b64}).then(function(){return loadUserFont()}).then(function(){render();toast(userFont?'فونت فعال شد':'این فایل فونت قابل استفاده نبود')});
+        };
+        fr0.readAsArrayBuffer(ff0);
+      }
+    }
+  }
+  else if(t.dataset.act==='pfin'){if(!ui.pf)ui.pf=Object.assign({},getProf());var nv=parseFloat(norm(t.value));ui.pf[t.dataset.k]=isNaN(nv)?'':nv}
   else if(t.dataset.act==='pftext'){if(!ui.pf)ui.pf=Object.assign({},getProf());ui.pf.goalText=t.value}
   else if(t.dataset.act==='rt'&&t.value){S.settings.rem.times[t.dataset.v]=t.value;persist();toast('ساعت یادآوری ذخیره شد')}
   else if(t.dataset.act==='start'&&t.value){S.settings.start=t.value;persist();render();toast('تاریخ شروع ذخیره شد')}
@@ -1769,6 +1874,7 @@ window.addEventListener('pagehide',flush);
   ui.wk=addDays(todayD(),-wdIdx(todayD()));
   ui.exp=monthFirst(todayD(),S.settings.cal);
   render();
+  loadUserFont().then(function(){if(userFont&&ui.tab==='set')render()});
 })();
 })();
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
